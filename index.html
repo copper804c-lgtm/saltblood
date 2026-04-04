@@ -320,7 +320,16 @@
     </div>
 
     <div class="section no-print" style="border-color: #5bc0de;">
-        <h3>データ引継ぎ（バックアップ・復元）</h3>
+        <h3>データ引継ぎ（バックアップ・復元） <button onclick="toggleGuidance('dataTransferGuidance')"
+                style="font-size:0.6em; background-color:#5bc0de; color:white; padding:4px 8px; vertical-align:middle;">📖
+                使い方</button></h3>
+        <div id="dataTransferGuidance" class="guidance-content">
+            <b>【データ引継ぎ（バックアップ・復元） 使い方】</b><br>
+            機種変更などで端末間でデータを移動させたい場合に使います。<br>
+            <b>書き出す（現在の端末）:</b> 「⬇️ データをファイルに書き出す」ボタンを押し、バックアップファイルを保存します。そのファイルをメールやクラウド等で新しい端末に送ります。<br>
+            <b>読み込む（新しい端末）:</b> 受け取ったバックアップファイルを「ファイルを選択」から選び、「⬆️ ファイルからデータを読み込む」ボタンを押すと、すべてのデータが復元されます。<br>
+            ※読み込むと現在の端末にあるデータは上書きされるのでご注意ください。
+        </div>
         <p style="font-size: 0.9em; margin-top:0;">端末間でデータを移動させたい場合に使います。出力した「バックアップファイル」をもう一方の端末で読み込んでください。</p>
         <button onclick="exportData()" style="background-color:#5bc0de; color:white; font-weight:bold;">⬇️ データをファイルに書き出す</button>
         <div style="margin-top: 10px;">
