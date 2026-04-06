@@ -1161,12 +1161,20 @@
 
         // グラフ期間の初期値セットと更新用
         function initGraphDates() {
-            let endDate = new Date();
-            let startDate = new Date();
-            startDate.setDate(endDate.getDate() - 13); // デフォルト2週間
+            let savedStart = localStorage.getItem("graphStartDate");
+            let savedEnd = localStorage.getItem("graphEndDate");
+            
+            if (savedStart && savedEnd) {
+                document.getElementById("graphStartDate").value = savedStart;
+                document.getElementById("graphEndDate").value = savedEnd;
+            } else {
+                let endDate = new Date();
+                let startDate = new Date();
+                startDate.setDate(endDate.getDate() - 13); // デフォルト2週間
 
-            document.getElementById("graphEndDate").value = endDate.toISOString().split("T")[0];
-            document.getElementById("graphStartDate").value = startDate.toISOString().split("T")[0];
+                document.getElementById("graphEndDate").value = endDate.toISOString().split("T")[0];
+                document.getElementById("graphStartDate").value = startDate.toISOString().split("T")[0];
+            }
         }
 
         function updateGraphRange() {
@@ -1212,6 +1220,10 @@
                 diffDays = 99;
                 document.getElementById("graphStartDate").value = startDate.toISOString().split("T")[0];
             }
+
+            // 確定したグラフ期間を保存
+            localStorage.setItem("graphStartDate", document.getElementById("graphStartDate").value);
+            localStorage.setItem("graphEndDate", document.getElementById("graphEndDate").value);
 
             let printPeriodSpan = document.getElementById("printGraphPeriod");
             if (printPeriodSpan) {
@@ -1421,7 +1433,9 @@
                 meals: JSON.parse(localStorage.getItem("meals") || "[]"),
                 vitals: JSON.parse(localStorage.getItem("vitals") || "[]"),
                 foodDatabase: JSON.parse(localStorage.getItem("foodDatabase") || "[]"),
-                saltLimit: localStorage.getItem("saltLimit") || "6.0"
+                saltLimit: localStorage.getItem("saltLimit") || "6.0",
+                graphStartDate: localStorage.getItem("graphStartDate") || "",
+                graphEndDate: localStorage.getItem("graphEndDate") || ""
             };
             
             let json = JSON.stringify(data);
@@ -1455,6 +1469,8 @@
                             localStorage.setItem("vitals", JSON.stringify(data.vitals));
                             localStorage.setItem("foodDatabase", JSON.stringify(data.foodDatabase));
                             if(data.saltLimit) localStorage.setItem("saltLimit", data.saltLimit);
+                            if(data.graphStartDate) localStorage.setItem("graphStartDate", data.graphStartDate);
+                            if(data.graphEndDate) localStorage.setItem("graphEndDate", data.graphEndDate);
                             
                             alert("データを復元しました。画面を更新します。");
                             location.reload();
