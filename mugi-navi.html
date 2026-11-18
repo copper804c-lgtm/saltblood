@@ -34,13 +34,16 @@
     padding: 8px 12px;
     line-height: 1.5;
   }
-  #map { flex: 1 1 34%; min-height: 150px; width: 100%; background: #222; }
+  #map { flex: 0 1 30%; min-height: 100px; width: 100%; background: #222; }
   #panel {
-    flex: 0 0 auto;
-    padding: 10px 12px 14px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   #stats {
     display: flex;
@@ -50,7 +53,7 @@
     border-radius: 12px;
     padding: 8px 4px;
   }
-  .stat .num { font-size: 34px; font-weight: bold; line-height: 1.1; }
+  .stat .num { font-size: 30px; font-weight: bold; line-height: 1.1; }
   .stat .unit { font-size: 15px; color: #9aa0a6; }
   .stat .label { font-size: 13px; color: #9aa0a6; }
   #bubble {
@@ -60,7 +63,7 @@
     padding: 10px 14px;
     font-size: 19px;
     line-height: 1.5;
-    min-height: 58px;
+    min-height: 50px;
   }
   #bubble .who { color: #ffb300; font-weight: bold; font-size: 14px; display: block; }
   #heard { font-size: 13px; color: #9aa0a6; min-height: 16px; }
@@ -74,7 +77,7 @@
     padding: 16px 8px;
     color: #fff;
     cursor: pointer;
-    min-height: 64px;
+    min-height: 58px;
   }
   button:active { opacity: 0.75; }
   #btnTalk { background: #e65100; font-size: 23px; min-height: 84px; }
@@ -82,7 +85,7 @@
   #btnRec { background: #37474f; }
   #btnRec.on { background: #c62828; }
   #btnWeather { background: #1565c0; }
-  .small button { font-size: 15px; min-height: 52px; background: #2a2e38; }
+  .small button { font-size: 14px; min-height: 48px; background: #2a2e38; }
   #recState { font-size: 14px; color: #9aa0a6; text-align: center; }
 </style>
 </head>
@@ -114,6 +117,9 @@
     <button id="btnJson">⬇ JSON保存</button>
     <button id="btnGpx">⬇ GPX保存</button>
     <button id="btnClear">🗑 記録クリア</button>
+  </div>
+  <div class="row small">
+    <button id="btnTimeline">⬇ Timeline形式JSON（ツーリング記録アプリ用）</button>
   </div>
 </div>
 
@@ -237,7 +243,8 @@ function saveTrack() {
     localStorage.setItem("mugiNaviTrack", JSON.stringify({
       track: track,
       totalDistKm: totalDistKm,
-      recStartTime: recStartTime
+      recStartTime: recStartTime,
+      recording: recording
     }));
   } catch (e) { /* 保存できなくても続行 */ }
 }
@@ -250,10 +257,22 @@ function restoreTrack() {
     if (data && Array.isArray(data.track) && data.track.length) {
       track = data.track;
       totalDistKm = data.totalDistKm || 0;
-      recStartTime = null; // 復元時は記録停止状態にする
       redrawTrack();
       updateStats();
-      $("recState").textContent = "前回の記録（" + track.length + "点）を復元しました";
+      if (data.recording && data.recStartTime) {
+        // 記録中に画面が消える等で止まっていたら、自動で記録を再開する
+        recording = true;
+        recStartTime = data.recStartTime;
+        $("btnRec").textContent = "⏹ 記録終了";
+        $("btnRec").classList.add("on");
+        $("recState").textContent = "● 記録中です（自動で再開しました）";
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(updateStats, 1000);
+        $("bubbleText").textContent = "おかえり。記録が途中で止まってたみたいやから、自動で再開したで。そのまま続けて記録するね。";
+      } else {
+        recStartTime = null;
+        $("recState").textContent = "前回の記録（" + track.length + "点）を復元しました";
+      }
     }
   } catch (e) { /* 壊れたデータは無視 */ }
 }
@@ -349,7 +368,14 @@ function requestWakeLock() {
   } catch (e) { /* 非対応環境では無視 */ }
 }
 document.addEventListener("visibilitychange", function () {
-  if (document.visibilityState === "visible" && recording) requestWakeLock();
+  if (document.visibilityState === "visible" && recording) {
+    requestWakeLock();
+    // 裏に回っている間に位置情報の監視が止まっていたら、張り直す
+    try {
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      startWatch();
+    } catch (e) { /* 失敗しても記録フラグは維持 */ }
+  }
 });
 
 // ====== 天気（Open-Meteo、キー不要） ======
@@ -449,6 +475,19 @@ function saveGpx() {
   say("GPXで保存したで。地図アプリでも開ける形式やよ。");
 }
 
+function saveTimelineJson() {
+  if (!track.length) { say("まだ記録があらへんよ。まず記録開始してな。"); return; }
+  var seg = {
+    startTime: new Date(track[0].t).toISOString(),
+    endTime: new Date(track[track.length - 1].t).toISOString(),
+    timelinePath: track.map(function (p) {
+      return { point: p.lat.toFixed(7) + "°, " + p.lng.toFixed(7) + "°", time: new Date(p.t).toISOString() };
+    })
+  };
+  download("mugi-navi-timeline-" + dateStamp() + ".json", JSON.stringify({ semanticSegments: [seg] }, null, 2), "application/json");
+  say("Timeline形式で保存したで。ツーリング記録アプリで読み込んでみてな。");
+}
+
 function clearTrack() {
   if (recording) { say("記録中はクリアできへんよ。先に記録を終わらせてな。"); return; }
   track = [];
@@ -541,6 +580,7 @@ $("btnRec").addEventListener("click", function () {
 $("btnWeather").addEventListener("click", function () { fetchWeather(true); });
 $("btnJson").addEventListener("click", saveJson);
 $("btnGpx").addEventListener("click", saveGpx);
+$("btnTimeline").addEventListener("click", saveTimelineJson);
 $("btnClear").addEventListener("click", clearTrack);
 
 // ====== 起動 ======
