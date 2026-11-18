@@ -364,23 +364,45 @@ var WMO = {
   95: "雷雨", 96: "雷雨", 99: "雷雨"
 };
 
+function weatherMsg(desc, temp, wind, posNote) {
+  var msg = "今の天気は " + desc + "、気温 " + temp + " 度、風速 " + wind + " キロやで。";
+  if (desc.indexOf("雨") >= 0) msg += "雨具の用意、忘れんといてな。";
+  else if (desc.indexOf("晴") >= 0) msg += "ツーリング日和やね！";
+  if (posNote) msg += "（位置情報が取れてへんから、東温市付近の天気やで）";
+  return msg;
+}
+
 function fetchWeather(announce) {
   var p = pos || FALLBACK_POS;
   var url = "https://api.open-meteo.com/v1/forecast?latitude=" + p.lat.toFixed(4) +
             "&longitude=" + p.lng.toFixed(4) +
             "&current=temperature_2m,weather_code,wind_speed_10m&timezone=Asia%2FTokyo";
-  fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+  fetch(url).then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function (data) {
     var cur = data.current || {};
     var desc = WMO[cur.weather_code] || "くもり";
     var temp = (typeof cur.temperature_2m === "number") ? Math.round(cur.temperature_2m) : "―";
     var wind = (typeof cur.wind_speed_10m === "number") ? Math.round(cur.wind_speed_10m) : "―";
-    var msg = "今の天気は " + desc + "、気温 " + temp + " 度、風速 " + wind + " キロやで。";
-    if (desc.indexOf("雨") >= 0) msg += "雨具の用意、忘れんといてな。";
-    else if (desc.indexOf("晴") >= 0) msg += "ツーリング日和やね！";
-    if (!pos) msg += "（位置情報が取れてへんから、東温市付近の天気やで）";
-    say(msg);
-  }).catch(function () {
-    if (announce !== false) say("ごめん、天気が取れへんかった。電波の届くところで、もう一回試してみてな。");
+    say(weatherMsg(desc, temp, wind, !pos));
+  }).catch(function (e1) {
+    // 予備の天気サービス（wttr.in）でもう一回試す
+    var url2 = "https://wttr.in/" + p.lat.toFixed(3) + "," + p.lng.toFixed(3) + "?format=j1";
+    fetch(url2).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (data) {
+      var cur = (data.current_condition || [])[0] || {};
+      var raw = (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) ? cur.weatherDesc[0].value.trim() : "";
+      var descJa = { "Sunny": "晴れ", "Clear": "快晴", "Partly cloudy": "晴れ時々くもり", "Partly Cloudy": "晴れ時々くもり", "Cloudy": "くもり", "Overcast": "くもり", "Light rain": "小雨", "Patchy rain nearby": "にわか雨", "Moderate rain": "雨", "Heavy rain": "強い雨" }[raw] || "くもり";
+      var temp = cur.temp_C || "―";
+      var wind = cur.windspeedKmph || "―";
+      say(weatherMsg(descJa, temp, wind, !pos));
+    }).catch(function (e2) {
+      $("heard").textContent = "⚠ 天気エラー: " + (e1 && e1.message ? e1.message : e1) + " / " + (e2 && e2.message ? e2.message : e2);
+      if (announce !== false) say("ごめん、天気が取れへんかった。画面の下にエラーの文字が出てるから、その文字をむぎに教えてな。");
+    });
   });
 }
 
