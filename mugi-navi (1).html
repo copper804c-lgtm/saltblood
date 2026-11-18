@@ -34,13 +34,16 @@
     padding: 8px 12px;
     line-height: 1.5;
   }
-  #map { flex: 1 1 34%; min-height: 150px; width: 100%; background: #222; }
+  #map { flex: 0 1 30%; min-height: 100px; width: 100%; background: #222; }
   #panel {
-    flex: 0 0 auto;
-    padding: 10px 12px 14px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 12px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   #stats {
     display: flex;
@@ -50,7 +53,7 @@
     border-radius: 12px;
     padding: 8px 4px;
   }
-  .stat .num { font-size: 34px; font-weight: bold; line-height: 1.1; }
+  .stat .num { font-size: 30px; font-weight: bold; line-height: 1.1; }
   .stat .unit { font-size: 15px; color: #9aa0a6; }
   .stat .label { font-size: 13px; color: #9aa0a6; }
   #bubble {
@@ -60,7 +63,7 @@
     padding: 10px 14px;
     font-size: 19px;
     line-height: 1.5;
-    min-height: 58px;
+    min-height: 50px;
   }
   #bubble .who { color: #ffb300; font-weight: bold; font-size: 14px; display: block; }
   #heard { font-size: 13px; color: #9aa0a6; min-height: 16px; }
@@ -74,7 +77,7 @@
     padding: 16px 8px;
     color: #fff;
     cursor: pointer;
-    min-height: 64px;
+    min-height: 58px;
   }
   button:active { opacity: 0.75; }
   #btnTalk { background: #e65100; font-size: 23px; min-height: 84px; }
@@ -82,8 +85,23 @@
   #btnRec { background: #37474f; }
   #btnRec.on { background: #c62828; }
   #btnWeather { background: #1565c0; }
-  .small button { font-size: 15px; min-height: 52px; background: #2a2e38; }
+  .small button { font-size: 14px; min-height: 48px; background: #2a2e38; }
   #recState { font-size: 14px; color: #9aa0a6; text-align: center; }
+  #dimOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    color: #666;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 17px;
+    line-height: 1.8;
+    padding: 20px;
+  }
+  #dimOverlay.show { display: flex; }
 </style>
 </head>
 <body>
@@ -118,7 +136,12 @@
   <div class="row small">
     <button id="btnTimeline">⬇ Timeline形式JSON（ツーリング記録アプリ用）</button>
   </div>
+  <div class="row small">
+    <button id="btnDim">🌙 画面を暗くする（記録中の省電力）</button>
+  </div>
 </div>
+
+<div id="dimOverlay"><div>🌙 記録中です（省電力モード）<br>タップすると画面に戻ります<br><span id="dimInfo"></span></div></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -135,6 +158,7 @@ var recStartTime = null;   // 記録開始時刻 (epoch ms)
 var watchId = null;
 var timerId = null;
 var wakeLock = null;
+var lastPosAt = 0;         // 最後に位置が取れた時刻
 
 var $ = function (id) { return document.getElementById(id); };
 
@@ -227,6 +251,9 @@ function fmtElapsed(ms) {
 function updateStats() {
   $("speed").textContent = Math.round(currentSpeedKmh);
   $("dist").textContent = totalDistKm.toFixed(2);
+  if ($("dimOverlay").classList.contains("show")) {
+    $("dimInfo").textContent = "ここまで " + totalDistKm.toFixed(2) + " km";
+  }
   if (recStartTime) {
     $("elapsed").textContent = fmtElapsed(Date.now() - recStartTime);
   } else {
@@ -264,7 +291,7 @@ function restoreTrack() {
         $("btnRec").classList.add("on");
         $("recState").textContent = "● 記録中です（自動で再開しました）";
         if (timerId) clearInterval(timerId);
-        timerId = setInterval(updateStats, 1000);
+        timerId = setInterval(function () { updateStats(); watchdog(); }, 1000);
         $("bubbleText").textContent = "おかえり。記録が途中で止まってたみたいやから、自動で再開したで。そのまま続けて記録するね。";
       } else {
         recStartTime = null;
@@ -279,6 +306,7 @@ function onPosition(gp) {
   var c = gp.coords;
   var newPos = { lat: c.latitude, lng: c.longitude };
   var now = Date.now();
+  lastPosAt = now;
 
   if (typeof c.speed === "number" && c.speed !== null && c.speed >= 0) {
     currentSpeedKmh = c.speed * 3.6;
@@ -324,6 +352,18 @@ function startWatch() {
   });
 }
 
+// ====== GPS監視の張り直し（止まっていたら再開） ======
+function watchdog() {
+  if (!recording) return;
+  if (lastPosAt && Date.now() - lastPosAt > 45000) {
+    try {
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      startWatch();
+      lastPosAt = Date.now(); // 連続リトライを抑える
+    } catch (e) { /* 失敗しても次周期で再挑戦 */ }
+  }
+}
+
 // ====== 記録の開始・終了 ======
 function startRecording() {
   if (recording) { say("もう記録中やで。安心して走ってな。"); return; }
@@ -340,9 +380,9 @@ function startRecording() {
   $("btnRec").classList.add("on");
   $("recState").textContent = "● 記録中です";
   if (timerId) clearInterval(timerId);
-  timerId = setInterval(updateStats, 1000);
+  timerId = setInterval(function () { updateStats(); watchdog(); }, 1000);
   requestWakeLock();
-  say("記録スタート！いってらっしゃい、たっちゃん。安全運転でな。");
+  say("記録スタート！いってらっしゃい、たっちゃん。あと大事なお願い、記録中は電源ボタンで画面を消さないでな。消えると記録が止まってしまうねん。暗くしたいときは『画面を暗くする』ボタンを使ってな。");
 }
 
 function stopRecording() {
@@ -472,13 +512,22 @@ function saveGpx() {
   say("GPXで保存したで。地図アプリでも開ける形式やよ。");
 }
 
+function jstIso(ms) {
+  // Googleタイムラインと同じ「日本時間・+09:00」表記にする
+  var d = new Date(ms + 9 * 3600000);
+  function pad(n, l) { n = String(n); while (n.length < (l || 2)) n = "0" + n; return n; }
+  return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) +
+    "T" + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds()) +
+    "." + pad(d.getUTCMilliseconds(), 3) + "+09:00";
+}
+
 function saveTimelineJson() {
   if (!track.length) { say("まだ記録があらへんよ。まず記録開始してな。"); return; }
   var seg = {
-    startTime: new Date(track[0].t).toISOString(),
-    endTime: new Date(track[track.length - 1].t).toISOString(),
+    startTime: jstIso(track[0].t),
+    endTime: jstIso(track[track.length - 1].t),
     timelinePath: track.map(function (p) {
-      return { point: p.lat.toFixed(7) + "°, " + p.lng.toFixed(7) + "°", time: new Date(p.t).toISOString() };
+      return { point: p.lat.toFixed(7) + "°, " + p.lng.toFixed(7) + "°", time: jstIso(p.t) };
     })
   };
   download("mugi-navi-timeline-" + dateStamp() + ".json", JSON.stringify({ semanticSegments: [seg] }, null, 2), "application/json");
@@ -578,6 +627,14 @@ $("btnWeather").addEventListener("click", function () { fetchWeather(true); });
 $("btnJson").addEventListener("click", saveJson);
 $("btnGpx").addEventListener("click", saveGpx);
 $("btnTimeline").addEventListener("click", saveTimelineJson);
+$("btnDim").addEventListener("click", function () {
+  $("dimOverlay").classList.add("show");
+  requestWakeLock();
+  $("dimInfo").textContent = "ここまで " + totalDistKm.toFixed(2) + " km";
+});
+$("dimOverlay").addEventListener("click", function () {
+  $("dimOverlay").classList.remove("show");
+});
 $("btnClear").addEventListener("click", clearTrack);
 
 // ====== 起動 ======
