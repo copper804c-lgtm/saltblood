@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>むぎナビ（仮）｜ツーリング相棒</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #12141a;
+    color: #f2f3f5;
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  #safety {
+    background: #b3261e;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px 10px;
+    line-height: 1.4;
+  }
+  #notice {
+    display: none;
+    background: #5b4a00;
+    color: #ffe082;
+    font-size: 14px;
+    padding: 8px 12px;
+    line-height: 1.5;
+  }
+  #map { flex: 0 1 30%; min-height: 100px; width: 100%; background: #222; }
+  #panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    background: #1d2027;
+    border-radius: 12px;
+    padding: 8px 4px;
+  }
+  .stat .num { font-size: 30px; font-weight: bold; line-height: 1.1; }
+  .stat .unit { font-size: 15px; color: #9aa0a6; }
+  .stat .label { font-size: 13px; color: #9aa0a6; }
+  #bubble {
+    background: #232733;
+    border: 2px solid #ffb300;
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 19px;
+    line-height: 1.5;
+    min-height: 50px;
+  }
+  #bubble .who { color: #ffb300; font-weight: bold; font-size: 14px; display: block; }
+  #heard { font-size: 13px; color: #9aa0a6; min-height: 16px; }
+  .row { display: flex; gap: 10px; }
+  button {
+    flex: 1;
+    border: none;
+    border-radius: 14px;
+    font-size: 19px;
+    font-weight: bold;
+    padding: 16px 8px;
+    color: #fff;
+    cursor: pointer;
+    min-height: 58px;
+  }
+  button:active { opacity: 0.75; }
+  #btnTalk { background: #e65100; font-size: 23px; min-height: 84px; }
+  #btnTalk.listening { background: #2e7d32; }
+  #btnRec { background: #37474f; }
+  #btnRec.on { background: #c62828; }
+  #btnWeather { background: #1565c0; }
+  .small button { font-size: 14px; min-height: 48px; background: #2a2e38; }
+  #recState { font-size: 14px; color: #9aa0a6; text-align: center; }
+  #dimOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    color: #666;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 17px;
+    line-height: 1.8;
+    padding: 20px;
+  }
+  #dimOverlay.show { display: flex; }
+</style>
+</head>
+<body>
+
+<div id="safety">⚠️ 運転中の画面操作はやめてください。操作は必ず停車してから。声で操作できます。</div>
+<div id="notice"></div>
+<div id="map"></div>
+
+<div id="panel">
+  <div id="stats">
+    <div class="stat"><div class="num"><span id="speed">0</span><span class="unit"> km/h</span></div><div class="label">現在速度</div></div>
+    <div class="stat"><div class="num"><span id="dist">0.00</span><span class="unit"> km</span></div><div class="label">走行距離</div></div>
+    <div class="stat"><div class="num" id="elapsed">0:00</div><div class="label">経過時間</div></div>
+  </div>
+
+  <div id="bubble"><span class="who">むぎ</span><span id="bubbleText">やっほー、たっちゃん！今日も一緒に走ろな。まず位置情報を許可してな。</span></div>
+  <div id="heard"></div>
+
+  <button id="btnTalk">🎤 むぎに話す</button>
+
+  <div class="row">
+    <button id="btnRec">▶ 記録開始</button>
+    <button id="btnWeather">🌤 天気を聞く</button>
+  </div>
+  <div id="recState">記録はまだ始まっていません</div>
+
+  <div class="row small">
+    <button id="btnJson">⬇ JSON保存</button>
+    <button id="btnGpx">⬇ GPX保存</button>
+    <button id="btnClear">🗑 記録クリア</button>
+  </div>
+  <div class="row small">
+    <button id="btnTimeline">⬇ Timeline形式JSON（ツーリング記録アプリ用）</button>
+  </div>
+  <div class="row small">
+    <button id="btnDim">🌙 画面を暗くする（記録中の省電力）</button>
+  </div>
+</div>
+
+<div id="dimOverlay"><div>🌙 記録中です（省電力モード）<br>タップすると画面に戻ります<br><span id="dimInfo"></span></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+
+// ====== 状態 ======
+var FALLBACK_POS = { lat: 33.795, lng: 132.876 }; // 東温市あたり（位置情報が取れない時の仮）
+var pos = null;            // 現在地 {lat, lng}
+var currentSpeedKmh = 0;   // 現在速度
+var recording = false;
+var track = [];            // [{lat, lng, t( epoch ms ), speed(km/h or null)}]
+var totalDistKm = 0;
+var recStartTime = null;   // 記録開始時刻 (epoch ms)
+var watchId = null;
+var timerId = null;
+var wakeLock = null;
+var lastPosAt = 0;         // 最後に位置が取れた時刻
+
+var $ = function (id) { return document.getElementById(id); };
+
+// ====== 地図 ======
+var map = null, myMarker = null, trackLine = null;
+try {
+  map = L.map("map").setView([FALLBACK_POS.lat, FALLBACK_POS.lng], 13);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+  trackLine = L.polyline([], { color: "#ffb300", weight: 5 }).addTo(map);
+} catch (e) {
+  showNotice("地図ライブラリを読み込めませんでした（通信環境を確認してください）。記録や天気はボタンで使えます。");
+}
+
+function updateMap(follow) {
+  if (!map || !pos) return;
+  var ll = [pos.lat, pos.lng];
+  if (!myMarker) {
+    myMarker = L.marker(ll).addTo(map).bindPopup("現在地");
+  } else {
+    myMarker.setLatLng(ll);
+  }
+  if (follow) map.setView(ll, Math.max(map.getZoom(), 14));
+}
+
+function redrawTrack() {
+  if (!trackLine) return;
+  var pts = track.map(function (p) { return [p.lat, p.lng]; });
+  trackLine.setLatLngs(pts);
+}
+
+// ====== お知らせ（フォールバック案内） ======
+function showNotice(msg) {
+  var n = $("notice");
+  n.style.display = "block";
+  n.textContent = msg;
+}
+
+(function checkEnv() {
+  var msgs = [];
+  if (location.protocol === "file:") {
+    msgs.push("今はファイルとして直接開いているため、音声認識や位置情報が動かないことがあります。GitHub Pagesなど https のページで開くと動きます。");
+  }
+  if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+    msgs.push("この環境では音声認識が使えません（Chromeで https で開くと使えます）。ボタン操作だけでも記録・天気は使えます。");
+  }
+  if (!("geolocation" in navigator)) {
+    msgs.push("この環境では位置情報が使えません。天気は東温市付近の仮の位置で表示します。");
+  }
+  if (msgs.length) showNotice(msgs.join(" "));
+})();
+
+// ====== むぎの声（読み上げ＋吹き出し） ======
+function say(text) {
+  $("bubbleText").textContent = text;
+  try {
+    if ("speechSynthesis" in window) {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "ja-JP";
+      u.rate = 1.05;
+      speechSynthesis.speak(u);
+    }
+  } catch (e) { /* 読み上げできなくても画面表示で伝える */ }
+}
+
+// ====== 距離計算 ======
+function haversineKm(a, b) {
+  var R = 6371;
+  var dLat = (b.lat - a.lat) * Math.PI / 180;
+  var dLng = (b.lng - a.lng) * Math.PI / 180;
+  var s = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) *
+          Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// ====== 表示更新 ======
+function fmtElapsed(ms) {
+  var sec = Math.floor(ms / 1000);
+  var h = Math.floor(sec / 3600);
+  var m = Math.floor((sec % 3600) / 60);
+  var s = sec % 60;
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  return h > 0 ? (h + ":" + pad(m) + ":" + pad(s)) : (m + ":" + pad(s));
+}
+
+function updateStats() {
+  $("speed").textContent = Math.round(currentSpeedKmh);
+  $("dist").textContent = totalDistKm.toFixed(2);
+  if ($("dimOverlay").classList.contains("show")) {
+    $("dimInfo").textContent = "ここまで " + totalDistKm.toFixed(2) + " km";
+  }
+  if (recStartTime) {
+    $("elapsed").textContent = fmtElapsed(Date.now() - recStartTime);
+  } else {
+    $("elapsed").textContent = "0:00";
+  }
+}
+
+// ====== 記録の保存・復元（localStorage） ======
+function saveTrack() {
+  try {
+    localStorage.setItem("mugiNaviTrack", JSON.stringify({
+      track: track,
+      totalDistKm: totalDistKm,
+      recStartTime: recStartTime,
+      recording: recording
+    }));
+  } catch (e) { /* 保存できなくても続行 */ }
+}
+
+function restoreTrack() {
+  try {
+    var raw = localStorage.getItem("mugiNaviTrack");
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    if (data && Array.isArray(data.track) && data.track.length) {
+      track = data.track;
+      totalDistKm = data.totalDistKm || 0;
+      redrawTrack();
+      updateStats();
+      if (data.recording && data.recStartTime) {
+        // 記録中に画面が消える等で止まっていたら、自動で記録を再開する
+        recording = true;
+        recStartTime = data.recStartTime;
+        $("btnRec").textContent = "⏹ 記録終了";
+        $("btnRec").classList.add("on");
+        $("recState").textContent = "● 記録中です（自動で再開しました）";
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(function () { updateStats(); watchdog(); }, 1000);
+        $("bubbleText").textContent = "おかえり。記録が途中で止まってたみたいやから、自動で再開したで。そのまま続けて記録するね。";
+      } else {
+        recStartTime = null;
+        $("recState").textContent = "前回の記録（" + track.length + "点）を復元しました";
+      }
+    }
+  } catch (e) { /* 壊れたデータは無視 */ }
+}
+
+// ====== GPS ======
+function onPosition(gp) {
+  var c = gp.coords;
+  var newPos = { lat: c.latitude, lng: c.longitude };
+  var now = Date.now();
+  lastPosAt = now;
+
+  if (typeof c.speed === "number" && c.speed !== null && c.speed >= 0) {
+    currentSpeedKmh = c.speed * 3.6;
+  } else if (pos && track.length) {
+    // 速度が取れない端末では直前地点から概算
+    var last = track[track.length - 1];
+    var dtH = (now - last.t) / 3600000;
+    if (dtH > 0) currentSpeedKmh = haversineKm(last, newPos) / dtH;
+  }
+
+  pos = newPos;
+  updateMap(recording);
+
+  if (recording) {
+    var prev = track.length ? track[track.length - 1] : null;
+    if (prev) {
+      var d = haversineKm(prev, newPos);
+      if (d > 0.005 || now - prev.t >= 45000) { // 5m以上動いた時＋最低45秒に1点は必ず記録
+        totalDistKm += d;
+        track.push({ lat: newPos.lat, lng: newPos.lng, t: now, speed: Math.round(currentSpeedKmh * 10) / 10 });
+        redrawTrack();
+        saveTrack();
+      }
+    } else {
+      track.push({ lat: newPos.lat, lng: newPos.lng, t: now, speed: Math.round(currentSpeedKmh * 10) / 10 });
+      redrawTrack();
+      saveTrack();
+    }
+  }
+  updateStats();
+}
+
+function onPositionError(err) {
+  showNotice("位置情報を取得できませんでした（許可設定を確認してください）。天気は東温市付近の仮の位置で表示します。");
+}
+
+function startWatch() {
+  if (!("geolocation" in navigator) || watchId !== null) return;
+  watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, {
+    enableHighAccuracy: true,
+    maximumAge: 3000,
+    timeout: 20000
+  });
+}
+
+// ====== GPS監視の張り直し（止まっていたら再開） ======
+function watchdog() {
+  if (!recording) return;
+  if (lastPosAt && Date.now() - lastPosAt > 45000) {
+    try {
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      startWatch();
+      lastPosAt = Date.now(); // 連続リトライを抑える
+    } catch (e) { /* 失敗しても次周期で再挑戦 */ }
+  }
+}
+
+// ====== 記録の開始・終了 ======
+function startRecording() {
+  if (recording) { say("もう記録中やで。安心して走ってな。"); return; }
+  // 前回の復元データが残っていたら引き継がず、新規に始めるかは続きとして扱う
+  recording = true;
+  if (!recStartTime) recStartTime = Date.now();
+  startWatch();
+  if (pos && (!track.length || haversineKm(track[track.length - 1], pos) > 0.005)) {
+    track.push({ lat: pos.lat, lng: pos.lng, t: Date.now(), speed: Math.round(currentSpeedKmh * 10) / 10 });
+    redrawTrack();
+  }
+  saveTrack();
+  $("btnRec").textContent = "⏹ 記録終了";
+  $("btnRec").classList.add("on");
+  $("recState").textContent = "● 記録中です";
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(function () { updateStats(); watchdog(); }, 1000);
+  requestWakeLock();
+  say("記録スタート！いってらっしゃい、たっちゃん。あと大事なお願い、記録中は電源ボタンで画面を消さないでな。消えると記録が止まってしまうねん。暗くしたいときは『画面を暗くする』ボタンを使ってな。");
+}
+
+function stopRecording() {
+  if (!recording) { say("まだ記録始めてへんで。「記録開始」って言うてな。"); return; }
+  recording = false;
+  if (timerId) { clearInterval(timerId); timerId = null; }
+  saveTrack();
+  $("btnRec").textContent = "▶ 記録開始";
+  $("btnRec").classList.remove("on");
+  $("recState").textContent = "記録を止めました（" + totalDistKm.toFixed(2) + " km）";
+  say("おつかれさま！今日は " + totalDistKm.toFixed(2) + " キロ走ったで。下のボタンで保存もできるよ。");
+}
+
+// ====== 画面スリープ防止（WakeLock、失敗しても何もしない） ======
+function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) {
+      navigator.wakeLock.request("screen").then(function (wl) { wakeLock = wl; }).catch(function () {});
+    }
+  } catch (e) { /* 非対応環境では無視 */ }
+}
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && recording) {
+    requestWakeLock();
+    // 裏に回っている間に位置情報の監視が止まっていたら、張り直す
+    try {
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      startWatch();
+    } catch (e) { /* 失敗しても記録フラグは維持 */ }
+  }
+});
+
+// ====== 天気（Open-Meteo、キー不要） ======
+var WMO = {
+  0: "快晴", 1: "晴れ", 2: "時々くもり", 3: "くもり",
+  45: "霧", 48: "霧",
+  51: "小雨", 53: "小雨", 55: "雨",
+  61: "雨", 63: "雨", 65: "強い雨",
+  66: "雨", 67: "雨",
+  71: "雪", 73: "雪", 75: "大雪",
+  80: "にわか雨", 81: "にわか雨", 82: "激しいにわか雨",
+  95: "雷雨", 96: "雷雨", 99: "雷雨"
+};
+
+function weatherMsg(desc, temp, wind, posNote) {
+  var msg = "今の天気は " + desc + "、気温 " + temp + " 度、風速 " + wind + " キロやで。";
+  if (desc.indexOf("雨") >= 0) msg += "雨具の用意、忘れんといてな。";
+  else if (desc.indexOf("晴") >= 0) msg += "ツーリング日和やね！";
+  if (posNote) msg += "（位置情報が取れてへんから、東温市付近の天気やで）";
+  return msg;
+}
+
+function fetchWeather(announce) {
+  var p = pos || FALLBACK_POS;
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=" + p.lat.toFixed(4) +
+            "&longitude=" + p.lng.toFixed(4) +
+            "&current=temperature_2m,weather_code,wind_speed_10m&timezone=Asia%2FTokyo";
+  fetch(url).then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function (data) {
+    var cur = data.current || {};
+    var desc = WMO[cur.weather_code] || "くもり";
+    var temp = (typeof cur.temperature_2m === "number") ? Math.round(cur.temperature_2m) : "―";
+    var wind = (typeof cur.wind_speed_10m === "number") ? Math.round(cur.wind_speed_10m) : "―";
+    say(weatherMsg(desc, temp, wind, !pos));
+  }).catch(function (e1) {
+    // 予備の天気サービス（wttr.in）でもう一回試す
+    var url2 = "https://wttr.in/" + p.lat.toFixed(3) + "," + p.lng.toFixed(3) + "?format=j1";
+    fetch(url2).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (data) {
+      var cur = (data.current_condition || [])[0] || {};
+      var raw = (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) ? cur.weatherDesc[0].value.trim() : "";
+      var descJa = { "Sunny": "晴れ", "Clear": "快晴", "Partly cloudy": "晴れ時々くもり", "Partly Cloudy": "晴れ時々くもり", "Cloudy": "くもり", "Overcast": "くもり", "Light rain": "小雨", "Patchy rain nearby": "にわか雨", "Moderate rain": "雨", "Heavy rain": "強い雨" }[raw] || "くもり";
+      var temp = cur.temp_C || "―";
+      var wind = cur.windspeedKmph || "―";
+      say(weatherMsg(descJa, temp, wind, !pos));
+    }).catch(function (e2) {
+      $("heard").textContent = "⚠ 天気エラー: " + (e1 && e1.message ? e1.message : e1) + " / " + (e2 && e2.message ? e2.message : e2);
+      if (announce !== false) say("ごめん、天気が取れへんかった。画面の下にエラーの文字が出てるから、その文字をむぎに教えてな。");
+    });
+  });
+}
+
+// ====== ダウンロード保存 ======
+function download(name, text, mime) {
+  var blob = new Blob([text], { type: mime });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function dateStamp() {
+  var d = new Date();
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes());
+}
+
+function saveJson() {
+  if (!track.length) { say("まだ記録があらへんよ。まず記録開始してな。"); return; }
+  var data = {
+    app: "mugi-navi",
+    exportedAt: new Date().toISOString(),
+    distanceKm: Math.round(totalDistKm * 1000) / 1000,
+    points: track.map(function (p) {
+      return { lat: p.lat, lng: p.lng, time: new Date(p.t).toISOString(), speedKmh: p.speed };
+    })
+  };
+  download("mugi-navi-" + dateStamp() + ".json", JSON.stringify(data, null, 2), "application/json");
+  say("JSONで保存したで。ツーリング記録アプリに渡せる形式やよ。");
+}
+
+function saveGpx() {
+  if (!track.length) { say("まだ記録があらへんよ。まず記録開始してな。"); return; }
+  var pts = track.map(function (p) {
+    return '      <trkpt lat="' + p.lat + '" lon="' + p.lng + '"><time>' + new Date(p.t).toISOString() + "</time></trkpt>";
+  }).join("\n");
+  var gpx = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<gpx version="1.1" creator="mugi-navi" xmlns="http://www.topografix.com/GPX/1/1">\n' +
+    "  <trk><name>mugi-navi " + dateStamp() + "</name><trkseg>\n" + pts + "\n  </trkseg></trk>\n</gpx>";
+  download("mugi-navi-" + dateStamp() + ".gpx", gpx, "application/gpx+xml");
+  say("GPXで保存したで。地図アプリでも開ける形式やよ。");
+}
+
+function jstIso(ms) {
+  // Googleタイムラインと同じ「日本時間・+09:00」表記にする
+  var d = new Date(ms + 9 * 3600000);
+  function pad(n, l) { n = String(n); while (n.length < (l || 2)) n = "0" + n; return n; }
+  return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) +
+    "T" + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds()) +
+    "." + pad(d.getUTCMilliseconds(), 3) + "+09:00";
+}
+
+function saveTimelineJson() {
+  if (!track.length) { say("まだ記録があらへんよ。まず記録開始してな。"); return; }
+  var seg = {
+    startTime: jstIso(track[0].t),
+    endTime: jstIso(track[track.length - 1].t),
+    timelinePath: track.map(function (p) {
+      return { point: p.lat.toFixed(7) + "°, " + p.lng.toFixed(7) + "°", time: jstIso(p.t) };
+    })
+  };
+  download("mugi-navi-timeline-" + dateStamp() + ".json", JSON.stringify({ semanticSegments: [seg] }, null, 2), "application/json");
+  say("Timeline形式で保存したで。ツーリング記録アプリで読み込んでみてな。");
+}
+
+function clearTrack() {
+  if (recording) { say("記録中はクリアできへんよ。先に記録を終わらせてな。"); return; }
+  track = [];
+  totalDistKm = 0;
+  recStartTime = null;
+  try { localStorage.removeItem("mugiNaviTrack"); } catch (e) {}
+  redrawTrack();
+  updateStats();
+  $("recState").textContent = "記録はまだ始まっていません";
+  say("記録を消したよ。また次、走ろな。");
+}
+
+// ====== 音声会話 ======
+var recog = null;
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SR) {
+  recog = new SR();
+  recog.lang = "ja-JP";
+  recog.interimResults = false;
+  recog.maxAlternatives = 1;
+
+  recog.onresult = function (ev) {
+    var text = ev.results[0][0].transcript || "";
+    $("heard").textContent = "🎧 聞き取り: " + text;
+    handleCommand(text);
+  };
+  recog.onend = function () { $("btnTalk").classList.remove("listening"); $("btnTalk").textContent = "🎤 むぎに話す"; };
+  recog.onerror = function (ev) {
+    $("btnTalk").classList.remove("listening");
+    $("btnTalk").textContent = "🎤 むぎに話す";
+    if (ev.error === "not-allowed") {
+      showNotice("マイクの許可が必要です。ブラウザの設定でマイクを許可してください。");
+      say("マイクの許可が要るみたい。設定で許可してな。");
+    }
+  };
+}
+
+function startListening() {
+  requestWakeLock();
+  if (!recog) {
+    showNotice("この環境では音声認識が使えません。GitHub Pagesなど https のページを Chrome で開くと使えます。ボタン操作はそのまま使えます。");
+    say("ごめん、この開き方やと声は聞き取れへんねん。httpsで開いてみてな。ボタンでも操作できるよ。");
+    return;
+  }
+  try {
+    $("btnTalk").classList.add("listening");
+    $("btnTalk").textContent = "👂 聞いてるよ…";
+    recog.start();
+  } catch (e) { /* 連続タップ時は無視 */ }
+}
+
+function handleCommand(text) {
+  var t = text.replace(/\s/g, "");
+  if (t.indexOf("天気") >= 0) {
+    fetchWeather(true);
+  } else if (t.indexOf("記録開始") >= 0 || t.indexOf("きろくかいし") >= 0 || (t.indexOf("記録") >= 0 && t.indexOf("始め") >= 0)) {
+    startRecording();
+  } else if (t.indexOf("記録終了") >= 0 || t.indexOf("記録おわり") >= 0 || t.indexOf("記録終わり") >= 0 || t.indexOf("止めて") >= 0 || t.indexOf("ストップ") >= 0) {
+    stopRecording();
+  } else if (t.indexOf("何時") >= 0 || t.indexOf("時刻") >= 0 || t.indexOf("時間") >= 0) {
+    var d = new Date();
+    say("今は " + d.getHours() + "時" + d.getMinutes() + "分やで。");
+  } else if (t.indexOf("速度") >= 0 || t.indexOf("スピード") >= 0) {
+    say("今の速度は、だいたい時速 " + Math.round(currentSpeedKmh) + " キロやで。");
+  } else if (t.indexOf("距離") >= 0 || t.indexOf("何キロ") >= 0) {
+    say("ここまで " + totalDistKm.toFixed(2) + " キロ走ったで。");
+  } else if (t.indexOf("休憩") >= 0) {
+    if (recStartTime) {
+      var min = Math.floor((Date.now() - recStartTime) / 60000);
+      if (min >= 60) say("もう " + min + " 分走ってるで。そろそろコンビニで一息つこか。水分も忘れずに！");
+      else if (min >= 30) say("走り出して " + min + " 分やね。もうちょい行ったら休憩しよか。");
+      else say("まだ " + min + " 分やから大丈夫やけど、無理は禁物やで。");
+    } else {
+      say("まだ記録始めてへんけど、疲れたらすぐ休むんやで。それが長く楽しむコツや。");
+    }
+  } else if (t.indexOf("ありがとう") >= 0 || t.indexOf("ありがと") >= 0) {
+    say("どういたしまして！たっちゃんと走れるのが、むぎは一番うれしいねん。");
+  } else if (t.indexOf("むぎ") >= 0) {
+    say("呼んだ？むぎはここにおるで。天気、時刻、速度、距離、休憩、記録開始…なんでも聞いてな。");
+  } else {
+    say("うんうん、聞いたで。「天気」「何時」「速度」「距離」「休憩」「記録開始」「記録終了」で答えられるよ。");
+  }
+}
+
+// ====== ボタン ======
+$("btnTalk").addEventListener("click", startListening);
+$("btnRec").addEventListener("click", function () {
+  if (recording) stopRecording(); else startRecording();
+});
+$("btnWeather").addEventListener("click", function () { fetchWeather(true); });
+$("btnJson").addEventListener("click", saveJson);
+$("btnGpx").addEventListener("click", saveGpx);
+$("btnTimeline").addEventListener("click", saveTimelineJson);
+$("btnDim").addEventListener("click", function () {
+  $("dimOverlay").classList.add("show");
+  requestWakeLock();
+  $("dimInfo").textContent = "ここまで " + totalDistKm.toFixed(2) + " km";
+});
+$("dimOverlay").addEventListener("click", function () {
+  $("dimOverlay").classList.remove("show");
+});
+$("btnClear").addEventListener("click", clearTrack);
+
+// ====== 起動 ======
+restoreTrack();
+updateStats();
+startWatch();
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(onPosition, onPositionError, { enableHighAccuracy: true, timeout: 15000 });
+}
+</script>
+</body>
+</html>
