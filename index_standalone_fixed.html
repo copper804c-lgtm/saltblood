@@ -1056,19 +1056,19 @@ const DEFAULT_POINTS = [
 
 // アプリデータ
 let appData = {
-  title: "11月11日、海沿いをめぐるツーリング",
-  subtitle: "Googleマップのタイムライン・GPS記録とドラレコ映像から振り返る一日",
+  title: "新しいツーリング記録",
+  subtitle: "データを取り込むと、ここに記録が表示されます",
   stats: {
-    start: "09:49",
-    end: "17:10",
-    distance: "約136.7 km",
-    area: "東温・下灘・内子"
+    start: "",
+    end: "",
+    distance: "",
+    area: ""
   },
-  overview: "朝、東温市周辺を出発。午前中はいったん松山市南部・砥部町方面まで走ってから戻り、11時過ぎに再び出発した。昼前には伊予市双海町のJR下灘駅付近へ。その後、内子町内子周辺まで進み、午後はこの周辺でしばらく過ごした。15時台後半に帰路につき、17時10分ごろ東温市周辺へ戻った。\n\n地図の青い線は、JSONに含まれる11月11日のGPS位置記録とタイムライン経路点を時刻順に重ねたもの。前の版のように立ち寄り地点同士を単純な直線で結ぶ方式ではない。GPS記録が途切れる区間は、記録された前後の点を結んでいるため、実際の道路中心線そのものではなく、GPS記録に基づく走行軌跡である。",
-  overviewNote: "※走行距離はJSONの車両移動区間の合計。地名は座標と地図上の位置から確認できる範囲で表記。内子町の滞在地点は施設名を断定せず「内子町内子周辺」としている。",
-  track: JSON.parse(JSON.stringify(DEFAULT_TRACK)),
+  overview: "まだデータがありません。「データを取り込む」から、タイムラインJSONやドラレコのNMEAファイルを取り込んでください。",
+  overviewNote: "",
+  track: [],
   trackTimes: [],
-  points: JSON.parse(JSON.stringify(DEFAULT_POINTS))
+  points: []
 };
 
 const STORAGE_KEY = 'touring_diary_studio_appData_v2';
@@ -1256,16 +1256,25 @@ function pointEndSortValue(point) {
   return pointSortValue(point);
 }
 
-function refreshHeaderTimesFromPoints() {
+function refreshHeaderTimesFromPoints(fromReplace) {
   const points = appData.points || [];
   const starts = points.map(pointSortValue).filter(v => v !== null);
   const ends = points.map(pointEndSortValue).filter(v => v !== null);
+  // 軌跡の時刻（最初＝開始、最後＝帰着）も候補に入れる
+  const tArr = Array.isArray(appData.trackTimes) ? appData.trackTimes : [];
+  const ftv = parseClockValue(tArr.find(t => t));
+  if (ftv !== null) starts.push(ftv);
+  const ltv = parseClockValue(tArr.slice().reverse().find(t => t));
+  if (ltv !== null) ends.push(ltv);
   if (!starts.length && !ends.length) return;
 
-  const currentStart = parseClockValue(appData.stats && appData.stats.start);
-  const currentEnd = parseClockValue(appData.stats && appData.stats.end);
-  if (currentStart !== null) starts.push(currentStart);
-  if (currentEnd !== null) ends.push(currentEnd);
+  // 置き換え取り込み時は、前の記録の時刻を混ぜない
+  if (!fromReplace) {
+    const currentStart = parseClockValue(appData.stats && appData.stats.start);
+    const currentEnd = parseClockValue(appData.stats && appData.stats.end);
+    if (currentStart !== null) starts.push(currentStart);
+    if (currentEnd !== null) ends.push(currentEnd);
+  }
 
   if (starts.length) appData.stats.start = formatClockFromValue(Math.min(...starts));
   if (ends.length) appData.stats.end = formatClockFromValue(Math.max(...ends));
@@ -2252,7 +2261,7 @@ function parseJsonFile(jsonStr, mode) {
       name: "出発地点",
       lat: newTrack[0][0],
       lon: newTrack[0][1],
-      time: "開始",
+      time: newTrackTimes.find(t => t) || "開始",
       desc: "GPSログの開始地点",
       memo: "",
       photos: [],
@@ -2264,7 +2273,7 @@ function parseJsonFile(jsonStr, mode) {
         name: "中継地点",
         lat: newTrack[midIdx][0],
         lon: newTrack[midIdx][1],
-        time: "途中",
+        time: newTrackTimes[midIdx] || "途中",
         desc: "GPSログの中間地点",
         memo: "",
         photos: [],
@@ -2275,7 +2284,7 @@ function parseJsonFile(jsonStr, mode) {
       name: "帰着地点",
       lat: newTrack[newTrack.length - 1][0],
       lon: newTrack[newTrack.length - 1][1],
-      time: "終了",
+      time: newTrackTimes.slice().reverse().find(t => t) || "終了",
       desc: "GPSログの終了地点",
       memo: "",
       photos: [],
@@ -2502,7 +2511,7 @@ function applyParsedData(newTrack, newPoints, mode, newTrackTimes) {
   while (appData.trackTimes.length < appData.track.length) appData.trackTimes.push("");
   if (appData.trackTimes.length > appData.track.length) appData.trackTimes.length = appData.track.length;
   sortPointsChronologically();
-  refreshHeaderTimesFromPoints();
+  refreshHeaderTimesFromPoints(mode === 'replace');
   finishImport(selectedPoint);
 }
 
