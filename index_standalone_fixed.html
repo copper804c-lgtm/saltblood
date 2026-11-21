@@ -1348,6 +1348,23 @@ function initMap() {
   gsi.addTo(map);
   document.getElementById('mapStatus').textContent = '地図を表示しています（地点ピンをクリックすると、選択固定されてメモ・写真・動画が表示されます）。オレンジ色の丸に触れると、その地点の時刻と座標が出ます。';
 
+  drawTrackOverlays();
+
+  renderMarkers();
+
+  if (trackLine && appData.track.length > 0) {
+    try {
+      map.fitBounds(trackLine.getBounds(), { padding: [30, 30] });
+    } catch (e) {}
+  }
+}
+
+// 軌跡ラインと時刻ドットの描画（initMapと、ピンのドラッグ移動時で共用）
+function drawTrackOverlays() {
+  if (!map || !window.L) return;
+  if (trackLine) { map.removeLayer(trackLine); trackLine = null; }
+  if (trackDotsLayer) { map.removeLayer(trackDotsLayer); trackDotsLayer = null; }
+
   if (appData.track && appData.track.length > 0) {
     trackLine = L.polyline(appData.track, {
       color: '#0879b9',
@@ -1359,7 +1376,6 @@ function initMap() {
   }
 
   // 軌跡の時刻ドット（触れる／クリックで時刻と座標を表示）
-  trackDotsLayer = null;
   if (appData.track && appData.track.length > 0 && Array.isArray(appData.trackTimes)) {
     const n = appData.track.length;
     const stride = n > 400 ? Math.ceil(n / 400) : 1;
@@ -1383,13 +1399,19 @@ function initMap() {
       trackDotsLayer.addTo(map);
     }
   }
+}
 
-  renderMarkers();
-
-  if (trackLine && appData.track.length > 0) {
-    try {
-      map.fitBounds(trackLine.getBounds(), { padding: [30, 30] });
-    } catch (e) {}
+// 地点ピンを動かしたとき、一番近い軌跡点（100m以内）も一緒に動かして青い線を追従させる
+function moveNearestTrackPoint(oldLat, oldLon, newLat, newLon) {
+  if (!appData.track || appData.track.length === 0) return;
+  let best = -1, bestD = Infinity;
+  appData.track.forEach((pt, i) => {
+    const d = calcDistance(oldLat, oldLon, pt[0], pt[1]);
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  if (best >= 0 && bestD <= 100) {
+    appData.track[best] = [newLat, newLon];
+    drawTrackOverlays();
   }
 }
 
@@ -1400,7 +1422,24 @@ function renderMarkers() {
   markers = [];
 
   appData.points.forEach((p, i) => {
-    const marker = L.marker([p.lat, p.lon]).addTo(map);
+    const marker = L.marker([p.lat, p.lon], { draggable: true }).addTo(map);
+
+    // ピンをドラッグして地点を移動（座標入力なしで位置修正できる）
+    marker.on('dragend', () => {
+      const ll = marker.getLatLng();
+      const oldLat = p.lat, oldLon = p.lon;
+      p.lat = Math.round(ll.lat * 10000000) / 10000000;
+      p.lon = Math.round(ll.lng * 10000000) / 10000000;
+      moveNearestTrackPoint(oldLat, oldLon, p.lat, p.lon);
+      saveDataToStorage();
+      renderPointList();
+      if (i === currentIndex) {
+        const ci = document.getElementById('inputPointCoords');
+        if (ci) ci.value = p.lat + ', ' + p.lon;
+      }
+      marker.setPopupContent(buildPopupContent(p, i));
+      showToast('地点を移動しました');
+    });
     
     const tooltipText = p.name + (p.memo ? ' : ' + p.memo.slice(0, 25) + '…' : '');
     marker.bindTooltip(tooltipText, { direction: 'top' });
@@ -2046,7 +2085,8 @@ document.getElementById('btnAddPoint').addEventListener('click', () => {
     videos: []
   };
   appData.points.push(newPt);
-  currentIndex = appData.points.length - 1;
+  sortPointsChronologically();
+  currentIndex = appData.points.indexOf(newPt);
   saveDataToStorage();
   renderPointList();
   renderMarkers();
@@ -2085,7 +2125,15 @@ function parseJsonFile(jsonStr, mode, targetDate) {
 
   const newTrack = [];
   const newTrackTimes = [];
+  const newTrackTs = [];
   const newPoints = [];
+  // 軌跡に1点追加（表示用の時刻文字列と、並べ替え用の日時を一緒に保持）
+  const pushTrack = (coords, isoTime) => {
+    newTrack.push(coords);
+    newTrackTimes.push(isoTime ? formatTimestamp(isoTime) : "");
+    const t = isoTime ? Date.parse(isoTime) : NaN;
+    newTrackTs.push(Number.isFinite(t) ? t : null);
+  };
 
   function extractLatLng(obj) {
     if (!obj) return null;
@@ -2187,8 +2235,7 @@ function parseJsonFile(jsonStr, mode, targetDate) {
           photos: [],
           videos: []
         });
-        newTrack.push(coords);
-        newTrackTimes.push(pv.duration && pv.duration.startTimestamp ? formatTimestamp(pv.duration.startTimestamp) : "");
+        pushTrack(coords, pv.duration && pv.duration.startTimestamp);
       }
     }
 
@@ -2196,16 +2243,16 @@ function parseJsonFile(jsonStr, mode, targetDate) {
       const act = item.activitySegment;
       const sCoord = extractLatLng(act.startLocation);
       const eCoord = extractLatLng(act.endLocation);
-      if (sCoord) { newTrack.push(sCoord); newTrackTimes.push(act.duration && act.duration.startTimestamp ? formatTimestamp(act.duration.startTimestamp) : ""); }
+      if (sCoord) pushTrack(sCoord, act.duration && act.duration.startTimestamp);
 
       const rawPts = (act.simplifiedRawPath && act.simplifiedRawPath.points) ||
                      (act.waypointPath && act.waypointPath.waypoints) ||
                      act.timelinePath || [];
       rawPts.forEach(pt => {
         const c = extractLatLng(pt);
-        if (c) { newTrack.push(c); newTrackTimes.push(pt && pt.time ? formatTimestamp(pt.time) : ""); }
+        if (c) pushTrack(c, pt && pt.time);
       });
-      if (eCoord) { newTrack.push(eCoord); newTrackTimes.push(act.duration && act.duration.endTimestamp ? formatTimestamp(act.duration.endTimestamp) : ""); }
+      if (eCoord) pushTrack(eCoord, act.duration && act.duration.endTimestamp);
     }
 
     // パターンB: semanticSegments (visit / activity)
@@ -2229,8 +2276,7 @@ function parseJsonFile(jsonStr, mode, targetDate) {
           photos: [],
           videos: []
         });
-        newTrack.push(coords);
-        newTrackTimes.push(item.startTime ? formatTimestamp(item.startTime) : "");
+        pushTrack(coords, item.startTime);
       }
     }
 
@@ -2238,7 +2284,7 @@ function parseJsonFile(jsonStr, mode, targetDate) {
     if (item.timelinePath) {
       item.timelinePath.forEach(pt => {
         const c = extractLatLng(pt);
-        if (c) { newTrack.push(c); newTrackTimes.push(pt && pt.time ? formatTimestamp(pt.time) : ""); }
+        if (c) pushTrack(c, pt && pt.time);
       });
     }
 
@@ -2246,14 +2292,14 @@ function parseJsonFile(jsonStr, mode, targetDate) {
     if (item.activity) {
       const sc = extractLatLng(item.activity.start);
       const ec = extractLatLng(item.activity.end);
-      if (sc) { newTrack.push(sc); newTrackTimes.push(item.startTime ? formatTimestamp(item.startTime) : ""); }
-      if (ec) { newTrack.push(ec); newTrackTimes.push(item.endTime ? formatTimestamp(item.endTime) : ""); }
+      if (sc) pushTrack(sc, item.startTime);
+      if (ec) pushTrack(ec, item.endTime);
     }
 
     // パターンC: locations配列 (Records.json)
     if (item.latitudeE7 !== undefined || item.latitude !== undefined) {
       const coords = extractLatLng(item);
-      if (coords) { newTrack.push(coords); newTrackTimes.push(item.timestamp ? formatTimestamp(item.timestamp) : ""); }
+      if (coords) pushTrack(coords, item.timestamp);
     }
 
     // パターンD: GeoJSON Feature
@@ -2273,13 +2319,12 @@ function parseJsonFile(jsonStr, mode, targetDate) {
             photos: [],
             videos: []
           });
-          newTrack.push(c);
-          newTrackTimes.push((item.properties && item.properties.time) || "");
+          pushTrack(c, (item.properties && item.properties.time) || null);
         }
       } else if (gType === 'LineString') {
         coords.forEach(pt => {
           const c = extractLatLng(pt);
-          if (c) { newTrack.push(c); newTrackTimes.push(""); }
+          if (c) pushTrack(c, null);
         });
       }
     }
@@ -2327,7 +2372,7 @@ function parseJsonFile(jsonStr, mode, targetDate) {
     return;
   }
 
-  applyParsedData(newTrack, newPoints, mode, newTrackTimes);
+  applyParsedData(newTrack, newPoints, mode, newTrackTimes, newTrackTs);
   // 日付で絞り込んだ場合は、その日付をタイトルにする
   if (targetDate && mode === 'replace') {
     const d = new Date(targetDate + 'T00:00:00+09:00');
@@ -2385,6 +2430,7 @@ function parseGpxFile(gpxStr, mode) {
   const xml = parser.parseFromString(gpxStr, "text/xml");
   const newTrack = [];
   const newTrackTimes = [];
+  const newTrackTs = [];
   const newPoints = [];
 
   // 名前空間付きXMLでも確実に拾えるよう getElementsByTagName を使う
@@ -2396,6 +2442,8 @@ function parseGpxFile(gpxStr, mode) {
       newTrack.push([lat, lon]);
       const tNode = pt.getElementsByTagName('time')[0];
       newTrackTimes.push(tNode ? formatTimestamp(tNode.textContent) : "");
+      const tParsed = tNode ? Date.parse(tNode.textContent) : NaN;
+      newTrackTs.push(Number.isFinite(tParsed) ? tParsed : null);
     }
   });
 
@@ -2431,7 +2479,7 @@ function parseGpxFile(gpxStr, mode) {
     newPoints.push({ name: "ゴール地点", lat: newTrack[newTrack.length - 1][0], lon: newTrack[newTrack.length - 1][1], time: newTrackTimes[newTrackTimes.length - 1] || "帰着", desc: "GPXトラック終了", memo: "", photos: [], videos: [] });
   }
 
-  applyParsedData(newTrack, newPoints, mode, newTrackTimes);
+  applyParsedData(newTrack, newPoints, mode, newTrackTimes, newTrackTs);
 }
 
 // KMLパーサー
@@ -2566,7 +2614,18 @@ function parseNmeaFile(nmeaStr, mode, fileName) {
 }
 
 // データ適用とUI完全同期
-function applyParsedData(newTrack, newPoints, mode, newTrackTimes) {
+function applyParsedData(newTrack, newPoints, mode, newTrackTimes, newTrackTs) {
+  // 日時がほぼ揃っている場合は、軌跡を時刻順に並べ替える（逆順・バラバラなデータの線の乱れ対策）
+  if (Array.isArray(newTrackTs) && newTrack.length > 1 && newTrackTs.length === newTrack.length) {
+    const validCount = newTrackTs.filter(t => t !== null && t !== undefined).length;
+    if (validCount >= newTrack.length * 0.9) {
+      const order = newTrack.map((_, i) => i).sort((a, b) => ((newTrackTs[a] == null ? Infinity : newTrackTs[a]) - (newTrackTs[b] == null ? Infinity : newTrackTs[b])) || (a - b));
+      const sortedTrack = order.map(i => newTrack[i]);
+      const sortedTimes = order.map(i => (newTrackTimes || [])[i] || "");
+      for (let i = 0; i < newTrack.length; i++) newTrack[i] = sortedTrack[i];
+      if (newTrackTimes) for (let i = 0; i < newTrackTimes.length; i++) newTrackTimes[i] = sortedTimes[i];
+    }
+  }
   const selectedPoint = appData.points && appData.points[currentIndex];
   const times = Array.isArray(newTrackTimes) ? newTrackTimes : [];
   if (mode === 'replace' || !appData.track || appData.track.length === 0) {
@@ -3348,7 +3407,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 100);
 });
-
 </script>
 
 </body>
