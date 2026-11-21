@@ -912,6 +912,11 @@ video {
         現在の記録に軌跡と地点を追加（統合）する
       </label>
     </div>
+    <div style="margin-top:14px;">
+      <label class="form-label">日付で絞り込む（タイムラインJSON用・任意）</label>
+      <input type="date" id="importDateFilter" style="width:100%; padding:8px; font-size:0.95rem; box-sizing:border-box;">
+      <div style="font-size:0.8rem; color:#666; margin-top:4px;">指定すると、その1日分だけを取り込みます。空欄なら全期間を取り込みます。</div>
+    </div>
 
     <div class="modal-actions">
       <button class="btn btn-outline modal-close">閉じる</button>
@@ -2052,7 +2057,7 @@ document.getElementById('btnAddPoint').addEventListener('click', () => {
 // ==========================================
 // 【要件①】GoogleタイムラインJSONの超強力パーサー
 // ==========================================
-function parseJsonFile(jsonStr, mode) {
+function parseJsonFile(jsonStr, mode, targetDate) {
   let data;
   try {
     data = JSON.parse(jsonStr);
@@ -2137,7 +2142,30 @@ function parseJsonFile(jsonStr, mode) {
   const items = Array.isArray(data) ? data : 
                 (data.timelineObjects || data.semanticSegments || data.rawSignals || data.locations || (data.features ? data.features : [data]));
 
+  // 日付で絞り込む（指定がある場合、その日と重なるセグメントだけ残す）
+  let dayStart = null, dayEnd = null;
+  if (targetDate) {
+    const t = new Date(targetDate + 'T00:00:00+09:00').getTime();
+    if (Number.isFinite(t)) { dayStart = t; dayEnd = t + 24 * 3600 * 1000; }
+  }
+  function inDay(startIso, endIso) {
+    if (dayStart === null) return true;
+    const s = startIso ? Date.parse(startIso) : NaN;
+    const e = endIso ? Date.parse(endIso) : NaN;
+    if (!Number.isFinite(s) && !Number.isFinite(e)) return true; // 時刻不明は残す
+    const ss = Number.isFinite(s) ? s : e;
+    const ee = Number.isFinite(e) ? e : s;
+    return ss < dayEnd && ee >= dayStart;
+  }
+
   items.forEach((item) => {
+    const segStart = item.startTime || item.timestamp ||
+      (item.placeVisit && item.placeVisit.duration && item.placeVisit.duration.startTimestamp) ||
+      (item.activitySegment && item.activitySegment.duration && item.activitySegment.duration.startTimestamp);
+    const segEnd = item.endTime || item.timestamp ||
+      (item.placeVisit && item.placeVisit.duration && item.placeVisit.duration.endTimestamp) ||
+      (item.activitySegment && item.activitySegment.duration && item.activitySegment.duration.endTimestamp);
+    if (!inDay(segStart, segEnd)) return;
     // パターンA: timelineObjects (placeVisit / activitySegment)
     if (item.placeVisit) {
       const pv = item.placeVisit;
@@ -2184,7 +2212,9 @@ function parseJsonFile(jsonStr, mode) {
     if (item.visit) {
       const v = item.visit;
       const coords = extractLatLng(v.topCandidate ? v.topCandidate.placeLocation : null) || extractLatLng(v);
-      const name = (v.topCandidate && (v.topCandidate.placeId || v.topCandidate.semanticType)) || `訪問地点 ${newPoints.length + 1}`;
+      const sem = v.topCandidate && v.topCandidate.semanticType;
+      const semName = sem === 'HOME' ? '自宅' : (sem === 'WORK' || sem === 'INFERRED_WORK') ? '職場' : sem === 'SEARCHED_ADDRESS' ? '検索した地点' : '';
+      const name = semName || `訪問地点 ${newPoints.length + 1}`;
       const timeStr = extractTimeStr(item.startTime || v.startTime, item.endTime || v.endTime);
       if (coords) {
         newPoints.push({
@@ -2293,11 +2323,60 @@ function parseJsonFile(jsonStr, mode) {
   }
 
   if (newTrack.length === 0 && newPoints.length === 0) {
-    alert('指定されたJSONファイルから有効な位置情報を検出できませんでした。');
+    alert(targetDate ? (targetDate + ' のデータが見つかりませんでした。日付を変えるか、空欄にして取り込んでください。') : '指定されたJSONファイルから有効な位置情報を検出できませんでした。');
     return;
   }
 
   applyParsedData(newTrack, newPoints, mode, newTrackTimes);
+  // 日付で絞り込んだ場合は、その日付をタイトルにする
+  if (targetDate && mode === 'replace') {
+    const d = new Date(targetDate + 'T00:00:00+09:00');
+    if (Number.isFinite(d.getTime())) {
+      appData.title = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日のツーリング記録';
+      updateHeaderDisplay();
+      saveDataToStorage();
+    }
+  }
+}
+
+// 軌跡から走行距離を自動計算して stats.distance に反映
+function recalcDistanceFromTrack() {
+  if (!appData.track || appData.track.length < 2) return;
+  let totalMeters = 0;
+  for (let i = 0; i < appData.track.length - 1; i++) {
+    totalMeters += calcDistance(
+      appData.track[i][0], appData.track[i][1],
+      appData.track[i + 1][0], appData.track[i + 1][1]
+    );
+  }
+  if (totalMeters > 0) appData.stats.distance = '約' + (totalMeters / 1000).toFixed(1) + ' km';
+}
+
+// 主なエリアを、出発・中間・帰着の座標から市町村名で自動入力（ネット必須・失敗時は空欄のまま）
+async function autoFillAreaFromTrack() {
+  if (!appData.track || appData.track.length === 0) return;
+  const picks = [
+    appData.track[0],
+    appData.track[Math.floor(appData.track.length / 2)],
+    appData.track[appData.track.length - 1]
+  ];
+  const names = [];
+  for (const pt of picks) {
+    try {
+      const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + pt[0] + '&lon=' + pt[1] + '&zoom=10&accept-language=ja');
+      if (!res.ok) continue;
+      const j = await res.json();
+      const a = (j && j.address) || {};
+      const city = a.city || a.town || a.village || a.county || '';
+      const short = city.replace(/(市|町|村)$/, '');
+      if (short && !names.includes(short)) names.push(short);
+    } catch (e) { /* オフライン時は何もしない */ }
+  }
+  if (names.length) {
+    appData.stats.area = names.join('・');
+    updateHeaderDisplay();
+    saveDataToStorage();
+  }
 }
 
 // GPXパーサー
@@ -2511,8 +2590,10 @@ function applyParsedData(newTrack, newPoints, mode, newTrackTimes) {
   while (appData.trackTimes.length < appData.track.length) appData.trackTimes.push("");
   if (appData.trackTimes.length > appData.track.length) appData.trackTimes.length = appData.track.length;
   sortPointsChronologically();
+  recalcDistanceFromTrack();
   refreshHeaderTimesFromPoints(mode === 'replace');
   finishImport(selectedPoint);
+  if (mode === 'replace' || !appData.stats.area) autoFillAreaFromTrack();
 }
 
 // 取り込み後は時系列順・選択状態・地図・動画パネルをまとめて同期
@@ -2610,8 +2691,10 @@ function processSingleLogFile(file) {
       const content = e.target.result;
       try {
         const mode = document.querySelector('input[name="importMode"]:checked').value;
+        const dateEl = document.getElementById('importDateFilter');
+        const targetDate = dateEl && dateEl.value ? dateEl.value : '';
         if (fileName.endsWith('.json')) {
-          parseJsonFile(content, mode);
+          parseJsonFile(content, mode, targetDate);
         } else if (fileName.endsWith('.gpx')) {
           parseGpxFile(content, mode);
         } else if (fileName.endsWith('.kml')) {
@@ -2620,7 +2703,7 @@ function processSingleLogFile(file) {
           parseNmeaFile(content, mode, file.name);
         } else {
           if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
-            parseJsonFile(content, mode);
+            parseJsonFile(content, mode, targetDate);
           } else if (content.includes('<gpx')) {
             parseGpxFile(content, mode);
           } else if (content.includes('$GP') || content.includes('$GN')) {
