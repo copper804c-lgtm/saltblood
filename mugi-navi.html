@@ -34,7 +34,29 @@
     padding: 8px 12px;
     line-height: 1.5;
   }
-  #map { flex: 0 1 30%; min-height: 100px; width: 100%; background: #222; }
+  #map { flex: 0 1 30%; min-height: 100px; width: 100%; background: #222; position: relative; }
+  #btnFull {
+    position: absolute; top: 10px; right: 10px; z-index: 1200;
+    flex: none; width: 54px; height: 54px; min-height: 54px; padding: 0;
+    border-radius: 50%; background: rgba(20,22,28,0.88); font-size: 25px;
+    border: 2px solid #ffb300; color: #ffb300;
+  }
+  #btnPanel { display: none; }
+  /* 横向き（高さが低い画面）では、注意書きを細く・パネルを畳んで地図を広く */
+  @media (orientation: landscape) and (max-height: 520px) {
+    #safety { font-size: 11px; padding: 2px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #map { flex: 1 1 auto; }
+    #btnPanel {
+      display: block; flex: none; min-height: 40px; font-size: 15px;
+      border-radius: 0; background: #232733; color: #ffb300; padding: 6px 8px;
+    }
+    #panel { display: none; }
+    body.panel-open #panel {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0;
+      max-height: 88dvh; z-index: 1500; background: #12141a;
+      border-top: 2px solid #ffb300;
+    }
+  }
   #panel {
     flex: 1 1 auto;
     min-height: 0;
@@ -108,7 +130,8 @@
 
 <div id="safety">⚠️ 運転中の画面操作はやめてください。操作は必ず停車してから。声で操作できます。</div>
 <div id="notice"></div>
-<div id="map"></div>
+<div id="map"><button id="btnFull" title="全画面表示">⛶</button></div>
+<button id="btnPanel">▲ メニューを開く</button>
 
 <div id="panel">
   <div id="stats">
@@ -639,6 +662,28 @@ $("dimOverlay").addEventListener("click", function () {
   $("dimOverlay").classList.remove("show");
 });
 $("btnClear").addEventListener("click", clearTrack);
+
+// ====== 全画面・横向きレイアウト ======
+function fixMapSize() { if (map) setTimeout(function () { map.invalidateSize(); }, 60); }
+$("btnFull").addEventListener("click", function () {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(function () {});
+  }
+  setTimeout(fixMapSize, 300);
+});
+document.addEventListener("fullscreenchange", function () {
+  $("btnFull").textContent = document.fullscreenElement ? "✕" : "⛶";
+  fixMapSize();
+});
+$("btnPanel").addEventListener("click", function () {
+  var open = document.body.classList.toggle("panel-open");
+  $("btnPanel").textContent = open ? "▼ メニューを閉じる" : "▲ メニューを開く";
+  setTimeout(fixMapSize, 250);
+});
+window.addEventListener("orientationchange", function () { setTimeout(fixMapSize, 350); });
+window.addEventListener("resize", function () { fixMapSize(); });
 
 // ====== 起動 ======
 restoreTrack();
