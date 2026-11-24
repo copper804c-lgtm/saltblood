@@ -1182,9 +1182,15 @@ function loadSavedData() {
   }
 }
 
+// blob: URL はセッション限りの仮URL（閉じると失効）なので、保存・書き出しから除外する
+function stripBlobUrls(key, value) {
+  if (key === 'url' && typeof value === 'string' && value.indexOf('blob:') === 0) return '';
+  return value;
+}
+
 function saveDataToStorage() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData, stripBlobUrls));
   } catch (e) {
     console.warn("ローカルストレージ保存に失敗:", e);
   }
@@ -1675,14 +1681,14 @@ window.playSelectedPointVideo = async function(pIdx, vIdx) {
   if (!p || !p.videos || !p.videos[vIdx]) return;
   const vItem = p.videos[vIdx];
 
-  let url = vItem.url;
-  if (!url) {
-    const saved = await VideoDB.getVideo(vItem.id);
-    if (saved && saved.blob) {
-      url = URL.createObjectURL(saved.blob);
-      vItem.url = url;
-    }
+  // 保存済みの blob: URL は失効している可能性があるため、IndexedDB から引き直す
+  let url = null;
+  const saved = await VideoDB.getVideo(vItem.id);
+  if (saved && saved.blob) {
+    url = URL.createObjectURL(saved.blob);
+    vItem.url = url;
   }
+  if (!url && vItem.url && vItem.url.indexOf('blob:') !== 0) url = vItem.url;
 
   if (url) {
     video.src = url;
@@ -1739,13 +1745,14 @@ async function getVideoSourceForPoint(idx) {
   // 1. 地点の videos 配列内の最新動画
   if (p.videos && p.videos.length > 0) {
     const v = p.videos[p.videos.length - 1];
-    if (v.url) return { url: v.url, name: v.name, source: 'blob' };
+    // 保存済みの blob: URL はセッション限りで失効するため、必ず IndexedDB から引き直す
     const saved = await VideoDB.getVideo(v.id);
     if (saved && saved.blob) {
       const url = URL.createObjectURL(saved.blob);
       v.url = url;
       return { url: url, name: v.name, source: 'indexedDB' };
     }
+    if (v.url && v.url.indexOf('blob:') !== 0) return { url: v.url, name: v.name, source: 'url' };
   }
 
   // 2. 単一動画キャッシュ
@@ -2858,7 +2865,7 @@ document.getElementById('btnProjectModal').addEventListener('click', () => {
 });
 
 document.getElementById('btnDownloadProjectJson').addEventListener('click', () => {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, stripBlobUrls, 2));
   const a = document.createElement('a');
   a.setAttribute("href", dataStr);
   const cleanTitle = appData.title.replace(/[\\/:*?"<>|]/g, '_');
@@ -3407,6 +3414,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 100);
 });
+
 </script>
 
 </body>
