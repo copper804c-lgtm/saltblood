@@ -1,1565 +1,1048 @@
-<!DOCTYPE html>
-<html>
-
+<!doctype html>
+<html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>塩分・血圧管理</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ff6666">
-    <link rel="apple-touch-icon" href="icon.svg">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            line-height: 1.6;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ツーリング記録スタジオ - Touring Diary Studio</title>
+<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="theme-color" content="#1b3846">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'">
+<style>
+:root {
+  --bg-color: #f2f5f7;
+  --card-bg: #ffffff;
+  --primary-color: #1b3846;
+  --primary-hover: #264e62;
+  --accent-color: #0b7a8b;
+  --accent-hover: #0e94a8;
+  --danger-color: #a83232;
+  --danger-hover: #c43c3c;
+  --text-main: #1f282e;
+  --text-muted: #5e6d76;
+  --border-color: #d3dde2;
+  --radius: 10px;
+  --shadow: 0 3px 12px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Yu Gothic UI", Meiryo, sans-serif;
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.65;
+}
+header {
+  background: linear-gradient(135deg, #1b3846 0%, #162b36 100%);
+  color: #fff;
+  padding: 18px 22px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.header-titles h1 {
+  font-size: 1.55rem;
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-titles .subtitle {
+  font-size: 0.92rem;
+  color: #b5c7d0;
+  margin: 0;
+}
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-        input,
-        button {
-            margin: 5px;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+main {
+  max-width: 1240px;
+  margin: 18px auto;
+  padding: 0 15px 40px;
+}
 
-        select {
-            margin: 5px;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            max-width: 90%;
-        }
+/* ツールバー */
+.toolbar-panel {
+  background: #ffffff;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+.toolbar-left, .toolbar-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
-        button {
-            background-color: #f0f0f0;
-            cursor: pointer;
-        }
+/* ボタン共通 */
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-decoration: none;
+}
+.btn-primary { background: var(--primary-color); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-accent { background: var(--accent-color); color: #fff; }
+.btn-accent:hover { background: var(--accent-hover); }
+.btn-danger { background: var(--danger-color); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-outline { background: #fff; border-color: var(--border-color); color: var(--text-main); }
+.btn-outline:hover { background: #edf2f5; }
+.btn-protect {
+  background: linear-gradient(135deg, #0d8293 0%, #155d78 100%);
+  color: #fff;
+  border: 1px solid #107283;
+  box-shadow: 0 2px 6px rgba(13,130,147,0.25);
+  font-weight: 600;
+}
+.btn-protect:hover { background: linear-gradient(135deg, #1094a8 0%, #176d8c 100%); }
+.btn-sm { padding: 5px 10px; font-size: 0.85rem; }
 
-        button:hover {
-            background-color: #e0e0e0;
-        }
+/* パネル */
+.panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eef2f4;
+}
+.panel-title {
+  font-size: 1.18rem;
+  margin: 0;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-        .section {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-        }
+/* 統計情報 */
+.stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.stat-box {
+  background: #edf4f7;
+  padding: 10px 14px;
+  border-radius: 8px;
+  min-width: 120px;
+  flex: 1;
+  border: 1px solid #d9e5ea;
+}
+.stat-label { font-size: 0.82rem; color: var(--text-muted); display: block; }
+.stat-value { font-size: 1.25rem; font-weight: 700; color: var(--primary-color); }
 
-        .item {
-            border-bottom: 1px solid #ddd;
-            margin-bottom: 10px;
-            padding: 10px;
-        }
+/* 地図 */
+#map {
+  width: 100%;
+  height: 580px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: #e4ebef;
+  z-index: 1;
+}
+.map-status-bar {
+  padding: 8px 12px;
+  background: #fff8e8;
+  border: 1px solid #f2e2be;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  margin-bottom: 10px;
+  color: #7a5e12;
+}
 
-        .total-salt {
-            font-weight: bold;
-            color: #d9534f;
-        }
+/* 動画エリア */
+.video-container {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .video-container { grid-template-columns: 1fr; }
+}
+video {
+  width: 100%;
+  max-height: 380px;
+  background: #111;
+  border-radius: 8px;
+  display: block;
+}
+.video-controls-box {
+  background: #f7fafb;
+  border: 1px solid #dae3e7;
+  border-radius: 8px;
+  padding: 14px;
+}
+.video-drop-zone {
+  border: 2px dashed #a0b8c4;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.video-drop-zone:hover, .video-drop-zone.dragover {
+  border-color: var(--accent-color);
+  background: #edf7fa;
+}
+.video-loaded-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  margin-top: 6px;
+  word-break: break-all;
+}
 
-        #graph {
-            overflow-x: auto;
-            margin-top: 10px;
-        }
+/* 地点編集・メモセクション */
+.editor-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .editor-layout { grid-template-columns: 1fr; }
+}
+.points-list {
+  max-height: 600px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px;
+  background: #fafcfd;
+}
+.point-card {
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: #fff;
+  border: 1px solid #dce4e8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.point-card:hover {
+  background: #f1f7f9;
+  border-color: #b5cdd8;
+}
+.point-card.active {
+  background: #e8f3f7;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(11,122,139,0.2);
+}
+.point-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.point-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--primary-color);
+}
+.point-time {
+  font-size: 0.82rem;
+  color: var(--accent-color);
+  font-weight: 600;
+}
+.point-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.point-badges {
+  margin-top: 5px;
+  display: flex;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+.badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e3edf2;
+  color: #3b5665;
+}
+.badge-memo { background: #e0f2fe; color: #0369a1; }
+.badge-photo { background: #fef3c7; color: #92400e; }
+.badge-video { background: #fce7f3; color: #9d174d; }
 
-        #mealList,
-        #vitalList {
-            display: none;
-            margin-top: 10px;
-        }
+/* 編集フォーム */
+.point-detail-panel {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+.form-group {
+  margin-bottom: 14px;
+}
+.form-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--primary-color);
+}
+.form-input, .form-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #b8c7cf;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.93rem;
+  transition: border-color 0.15s ease;
+}
+.form-input:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(11,122,139,0.15);
+}
+.form-textarea {
+  min-height: 95px;
+  resize: vertical;
+}
 
-        .print-only {
-            display: none;
-        }
+/* 写真・動画メディア一覧 */
+.photo-grid, .media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.photo-card {
+  border: 1px solid #d4dfe4;
+  border-radius: 6px;
+  padding: 5px;
+  background: #fafcfd;
+  position: relative;
+  transition: transform 0.15s ease;
+}
+.photo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+.photo-card img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+}
+.media-card-video {
+  border: 1px solid #c8d9e2;
+  border-radius: 6px;
+  padding: 8px 6px;
+  background: #f1f8fb;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+.media-card-video:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+.media-video-icon {
+  font-size: 1.8rem;
+  color: var(--accent-color);
+  margin-bottom: 2px;
+}
+.media-video-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  word-break: break-all;
+  max-height: 34px;
+  overflow: hidden;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.photo-delete-btn {
+  margin-top: 5px;
+  width: 100%;
+  background: #963535;
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.photo-delete-btn:hover { background: #b84040; }
 
-        .guidance-content {
-            display: none;
-            background-color: #f9f9f9;
-            border-color: #bce8f1;
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #bce8f1;
-            border-radius: 5px;
-            font-size: 0.9em;
-        }
+/* ポップアップ内スタイル */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+}
+.popup-box {
+  max-width: 280px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.popup-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #456;
+  margin-top: 7px;
+}
+.popup-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.92rem;
+  padding: 5px 7px;
+  border: 1px solid #c4d2d9;
+  border-radius: 6px;
+  margin-top: 2px;
+  font-family: inherit;
+}
+.popup-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 2px;
+}
+.popup-time {
+  font-size: 0.82rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.popup-desc {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed #d5e0e5;
+  padding-bottom: 5px;
+}
+.popup-memo {
+  background: #f0f7fa;
+  border-left: 3px solid var(--accent-color);
+  padding: 6px 9px;
+  margin: 7px 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.86rem;
+  color: #243842;
+  white-space: pre-wrap;
+}
+.popup-photos {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.popup-photo-thumb {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #c9d6dc;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.popup-photo-thumb:hover {
+  transform: scale(1.08);
+  border-color: var(--accent-color);
+}
+.popup-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 5px;
+  font-size: 0.8rem;
+}
 
-        @media print {
-            @page {
-                size: A4 landscape;
-                margin: 10mm;
-            }
+/* 写真拡大モーダル（ライトボックス） */
+.lightbox-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 18, 24, 0.92);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.lightbox-modal.active {
+  display: flex;
+}
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 0;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.4); }
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 0;
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.lightbox-nav:hover { background: rgba(255,255,255,0.4); }
+.lightbox-prev { left: 20px; }
+.lightbox-next { right: 20px; }
+.lightbox-caption {
+  color: #e0e9ee;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  text-align: center;
+  max-width: 80vw;
+}
 
-            body {
-                width: 100%;
-                margin: 0;
-                padding: 0;
-            }
+/* 一般モーダル */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 25, 30, 0.65);
+  z-index: 5000;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+}
+.modal-overlay.active { display: flex; }
+.modal-window {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+  padding: 24px;
+}
+.modal-title {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
 
-            .no-print {
-                display: none !important;
-            }
+/* ファイルインポート用ドラッグ＆ドロップ */
+.drop-zone {
+  border: 2px dashed #9cb6c3;
+  background: #f7fafc;
+  border-radius: 10px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--accent-color);
+  background: #edf7fa;
+}
+.drop-zone-icon {
+  font-size: 2.2rem;
+  color: var(--accent-color);
+  margin-bottom: 8px;
+}
 
-            .print-only {
-                display: block !important;
-            }
-
-            .section {
-                border: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            #graphStats {
-                font-size: 0.95em !important;
-                background: transparent !important;
-                border: 2px solid #ccc !important;
-                padding: 4px 10px !important;
-                margin: 5px 0 !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-                line-height: 1.3 !important;
-                break-inside: avoid !important;
-            }
-
-            #graph {
-                width: 100% !important;
-                height: 380px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                break-inside: avoid !important;
-            }
-
-            canvas {
-                width: 100% !important;
-                height: 380px !important;
-                max-width: none !important;
-            }
-        }
-    </style>
+/* 簡易トースト通知 */
+#toast {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background: #1e3a47;
+  color: #fff;
+  padding: 11px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+  z-index: 10000;
+  display: none;
+  font-size: 0.92rem;
+  border-left: 4px solid var(--accent-color);
+}
+</style>
 </head>
-
 <body>
 
-    <h2 class="no-print">塩分・血圧管理アプリ</h2>
-
-
-    <div class="section no-print">
-        <h3>食事入力 <button onclick="toggleGuidance('mealGuidance')"
-                style="font-size:0.6em; background-color:#5bc0de; color:white; padding:4px 8px; vertical-align:middle;">📖
-                使い方</button></h3>
-        <div id="mealGuidance" class="guidance-content">
-            <b>【食事入力・データ管理 使い方】</b><br>
-            「内容」をタップして食べ物を選ぶと、塩分が自動計算されます。<br>
-            <b>注意点:</b> 「a. 単位」は原則「1単位（100gや1人前など）」とし、「d. 今回食べた量」は、<b>その「a」の単位で、数量</b>を入力してください。（例:
-            aが「100g」、実際に150g食べた場合、dには「150」と入力）<br>
-            一覧にない食品を入力する際、単位と塩分を入力して保存すると、次回から自動リストに表示されます。<br>
-            入力後は「保存/追加」ボタンを押してください。<br>
-            日付に連動して1日の合計塩分がメーターに反映されます。<br>
-            <b>塩分メーターの色分け:</b> 上限値（目標）までが青色、そこから＋1.0gまでが黄色、それ以上が赤色になります。
-        </div>
-        日付:<input type="date" id="mealDate" onchange="drawSaltMeter()">
-        <button onclick="loadMeal()">データを呼出</button><br>
-        <select id="mealSelect" style="display:none;" onchange="selectMeal()"></select><br id="mealSelectBr"
-            style="display:none;">
-        <div
-            style="background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd; line-height:2.0; font-size:1.1em;">
-            <span style="font-size: 0.9em; color: #555;">[自動登録用] カテゴリ:</span> <input type="text" id="mealCategory" placeholder="例：A 材料商品" list="categoryList" style="width:120px;"><br>
-            a. <input type="text" id="mealUnit" placeholder="例：100g, 1人前" style="width:80px;"
-                oninput="calculateSaltSentence()"> あたり、<br>
-            b. 食塩相当量が <input type="number" step="0.1" id="mealBaseSalt" style="width:60px;"
-                oninput="calculateSaltSentence()"> g の<br>
-            c. 食品（内容）<input type="text" id="mealDesc" placeholder="例：醤油ラーメン" list="foodList"
-                oninput="onMealFoodSelect()" style="width:150px;"> を<br>
-            <datalist id="foodList"></datalist>
-            <input type="hidden" id="mealId">
-            d. 今回 <input type="number" step="0.1" id="mealAmount" value="1" oninput="calculateSaltSentence()"
-                style="width:60px;"> <!--<span id="mealUnitDisplay"></span>--> 食べた<br>
-            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">
-                e. 故に今回の食塩摂取量は <input type="number" step="0.1" id="salt"
-                    style="width:60px; font-weight:bold; background-color:#eef;" readonly> g である。
-            </div>
-        </div>
-
-        <button onclick="saveMeal()" style="background:#dff0d8;">保存/追加</button>
-        <button onclick="deleteCurrentMeal()" style="background:#f2dede;">削除</button>
-        <button onclick="toggleMeals()">📅 食事履歴を見る/隠す</button>
-        <div id="mealList"></div>
-
-        <hr>
-        <h3>指定日の塩分メーター 
-            <span style="font-size:0.8em; font-weight:normal;">(上限値: 
-            <select id="saltLimit" onchange="saveSaltLimit(); drawSaltMeter()" style="padding:2px; margin:0; width:70px;">
-            </select> )
-            </span>
-        </h3>
-        <div style="position: relative; width: 100%; margin-bottom: 25px;">
-            <div style="width:100%;background:#ddd;height:25px;border-radius:10px;position: relative; overflow: hidden;">
-                <!-- 上限値ライン -->
-                <div id="saltLimitLine" style="position: absolute; left: 40%; top: 0; bottom: 0; border-left: 2px dashed black; z-index: 5;"></div>
-                <div id="saltBar"
-                    style="height:25px;width:0%;background:#337ab7;border-radius:10px;transition: width 0.5s, background-color 0.5s; position: relative; z-index: 2;">
-                </div>
-            </div>
-            <!-- 15gまでの目盛り -->
-            <div style="position: absolute; width: 100%; top: 25px; display: flex; justify-content: space-between; font-size: 0.85em; color: #555; padding-top: 2px;">
-                <span>0</span>
-                <span>3</span>
-                <span>6</span>
-                <span>9</span>
-                <span>12</span>
-                <span>15g</span>
-            </div>
-        </div>
-        <div id="saltText" style="font-weight:bold; margin-top: 5px;"></div>
+<header>
+  <div class="header-top">
+    <div class="header-titles">
+      <h1 id="appTitleDisplay">11月11日、海沿いをめぐるツーリング</h1>
+      <div class="subtitle" id="appSubtitleDisplay">Googleマップのタイムライン・GPS記録とドラレコ映像から振り返る一日</div>
     </div>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-sm" id="btnEditHeader">✏️ タイトル・基本情報の編集</button>
+      <button class="btn btn-outline btn-sm" id="btnImportModal">📂 ファイル取り込み (JSON/GPX/NMEA)</button>
+      <button class="btn btn-outline btn-sm" id="btnProjectModal">💾 プロジェクト保存・読込</button>
+      <button class="btn btn-protect" id="btnExportBlog">🛡️ ブログ公開用HTMLを出力 (完全保護)</button>
+    </div>
+  </div>
+</header>
 
-    <div class="section">
-        <div class="no-print">
-            <h3>血圧・体重入力 <button onclick="toggleGuidance('vitalGuidance')"
-                    style="font-size:0.6em; background-color:#5bc0de; color:white; padding:4px 8px; vertical-align:middle;">📖
-                    使い方</button></h3>
-            <div id="vitalGuidance" class="guidance-content">
-                <b>【血圧・体重入力 使い方】</b><br>
-                毎日「朝」と「夕」の血圧（上・下）と体重を入力します。入力後「保存/更新」ボタンを押してください。<br>
-                過去のデータを修正したい場合は、「日付」カレンダーから日付を選んで「データを呼出」ボタンを押すと、入力欄に当時のデータが反映されます。<br>
-                数値を正しく修正後、「保存/更新」を押すと上書きされます。<br>
-                間違ったデータを消したい場合は、「📅 血圧履歴を見る/隠す」から個別に削除するか、「データを呼出」した後に「削除」ボタンを押してください。
-            </div>
-            日付:<input type="date" id="vitalDate">
-            <button onclick="loadVital()">データを呼出</button><br>
-            朝 上:<input type="number" id="amHigh" placeholder="最高">
-            朝 下:<input type="number" id="amLow" placeholder="最低"><br>
-            夕 上:<input type="number" id="pmHigh" placeholder="最高">
-            夕 下:<input type="number" id="pmLow" placeholder="最低"><br>
-            体重:<input type="number" step="0.1" id="weight" placeholder="kg"><br>
-            <button onclick="saveVital()" style="background:#dff0d8;">保存/更新</button>
-            <button onclick="deleteCurrentVital()" style="background:#f2dede;">削除</button>
-            <button onclick="toggleVitals()">📅 血圧履歴を見る/隠す</button>
+<main>
+  <!-- ツールバー -->
+  <div class="toolbar-panel">
+    <div class="toolbar-left">
+      <button class="btn btn-primary btn-sm" id="btnAddPoint">＋ 地点を追加</button>
+      <button class="btn btn-outline btn-sm" id="btnAutoCalc">🔄 距離・時刻を再計算</button>
+      <button class="btn btn-outline btn-sm" id="btnFitMap">🗺️ ルート全体を表示</button>
+    </div>
+    <div class="toolbar-right">
+      <span style="font-size:0.88rem; color:var(--text-muted);" id="dataStatusText">データ状態: 読み込み中...</span>
+    </div>
+  </div>
 
-            <div id="vitalList"></div>
-        </div>
+  <!-- 今日の走行メモ・統計 -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">今日の走行メモ</h2>
+      <button class="btn btn-outline btn-sm" id="btnEditOverview">編集</button>
+    </div>
+    <div class="stats">
+      <div class="stat-box">
+        <span class="stat-label">走行開始</span>
+        <span class="stat-value" id="statStart">09:49</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">帰着</span>
+        <span class="stat-value" id="statEnd">17:10</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">走行距離</span>
+        <span class="stat-value" id="statDistance">約136.7 km</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">主なエリア</span>
+        <span class="stat-value" id="statArea">東温・下灘・内子</span>
+      </div>
+    </div>
+    <div id="overviewText">
+      <!-- 概要文 -->
+    </div>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;" id="overviewNote">
+      <!-- 注釈 -->
+    </p>
+  </section>
 
-        <hr class="no-print">
-        <h3 class="no-print">血圧・塩分グラフ <button onclick="toggleGuidance('graphGuidance')"
-                style="font-size:0.6em; background-color:#5bc0de; color:white; padding:4px 8px; vertical-align:middle;">📖
-                使い方</button></h3>
-        <h2 class="print-only" style="text-align:center; margin-bottom: 5px;">
-            血圧・塩分レポート<br>
-            <span id="printGraphPeriod" style="font-size: 0.6em; font-weight: normal; color: #555;"></span>
-        </h2>
-        <div id="graphGuidance" class="guidance-content no-print">
-            <b>【グラフ・印刷 使い方】</b><br>
-            塩分過多の翌日に血圧が上がっていないか等の傾向を分析しましょう。棒グラフが血圧、折れ線グラフが塩分量を表します。<br>
-            「期間」の開始日と終了日を変更して「表示更新」ボタンを押すことで、指定した期間（最大100日間）の推移を確認できます。<br>
-            <b>【PDF・印刷方法】</b><br>
-            医療関係者に見せる等で印刷したい場合は、「氏名」を入力して「🖨️ PDFで保存・印刷」ボタンを押してください。<br>
-            A4サイズに合わせた印刷画面が開くので、送信先を「PDFに保存」にして好きなフォルダーに保存できます。<br>
-            （ブラウザの印刷機能を使用して、グラフや氏名表示部などの必要な情報のみが整えて出力されます）
-        </div>
+  <!-- GPS地図 -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">GPS走行ルート地図</h2>
+      <span style="font-size:0.85rem; color:var(--text-muted);">ピンをクリックすると、メモや写真が表示されます</span>
+    </div>
+    <div class="map-status-bar" id="mapStatus">地図を読み込んでいます...</div>
+    <div id="map"></div>
+    <p style="font-size:0.84rem; color:var(--text-muted); margin-top:8px;">
+      地図：国土地理院 標準地図（接続できない場合はOpenStreetMapへ自動切替）。青線＝GPS走行軌跡、マーカー＝主な地点（クリックでメモ・写真表示）。
+    </p>
+  </section>
 
-        <div class="no-print" style="margin-bottom:10px;">
-            氏名: <input type="text" id="patientName" placeholder="印刷用氏名"
-                oninput="document.getElementById('printNameDisplay').innerText = this.value;">
-            <button onclick="window.print()"
-                style="background-color:#4CAF50; color:white; font-weight:bold; margin-left:10px;">🖨️
-                PDFで保存・印刷</button>
-        </div>
-        <div class="print-only" style="margin-bottom:10px; font-size:1.2em; font-weight:bold; text-align:right;">
-            氏名: <span id="printNameDisplay"
-                style="border-bottom:1px solid #000; min-width:150px; display:inline-block; text-align:center;"></span>
-            (敬称略）
-        </div>
-
-        <div class="no-print">
-            期間: <input type="date" id="graphStartDate"> 〜 <input type="date" id="graphEndDate">
-            <button onclick="updateGraphRange()">表示更新</button>
-        </div>
+  <!-- 動画再生セクション -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">動画再生 (地図ピン連動)</h2>
+      <span style="font-size:0.85rem; color:var(--text-muted);" id="videoPointNotice">地図のピンをクリックすると、その地点の動画を再生できます</span>
+    </div>
+    <div class="video-container">
+      <video id="clip" controls playsinline preload="auto">
+        <source src="./とりてつ_13-20秒.mp4" type="video/mp4">
+        お使いのブラウザは動画の再生に対応していません。
+      </video>
+      <div class="video-controls-box">
+        <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:2px;">選択固定中の地点:</div>
+        <h3 style="margin:0 0 8px; font-size:1.15rem; color:var(--primary-color);" id="selectedPointNameDisplay">東温市周辺（出発地点）</h3>
         
-        <div id="graphStats" style="margin-top: 10px; margin-bottom: 15px; font-size: 0.9em; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; line-height: 1.6;"></div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;" id="videoStatus">
+          地図のピンをクリックすると、その地点の動画がセットされます。
+        </p>
 
-        <div id="graph" style="position: relative; height: 350px; width: 100%;">
-            <canvas id="graphCanvas"></canvas>
+        <button class="btn btn-accent" id="playClipBtn" style="width:100%; margin-bottom:12px; padding:10px; font-size:0.95rem;" disabled>
+          ▶ この地点の動画を再生
+        </button>
+
+        <div class="video-drop-zone" id="videoDropZone">
+          <div style="font-size:1.3rem; color:var(--accent-color); margin-bottom:2px;">🎥</div>
+          <div style="font-weight:600; font-size:0.86rem; color:var(--primary-color);" id="dropZoneTargetTitle">この地点に動画を追加</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:6px;">スマホ動画やドラレコ動画（MP4/MOV）をドロップ</div>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer; font-size:0.8rem; padding:4px 10px;">
+            動画ファイルを選択
+            <input type="file" id="videoFileInput" accept="video/mp4,video/quicktime,video/webm,video/*" style="display:none;">
+          </label>
         </div>
+        <div id="videoLoadedIndicator"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 地点ごとの感想・メモ・写真の編集 -->
+  <section class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">地点ごとの感想・メモ・写真</h2>
+      <span style="font-size:0.85rem; color:var(--text-muted);">左の一覧または地図のピンを選択して編集</span>
+    </div>
+    <div class="editor-layout">
+      <!-- 左側：地点一覧リスト -->
+      <div>
+        <div style="font-size:0.88rem; font-weight:600; margin-bottom:6px; color:var(--primary-color);">登録地点一覧</div>
+        <div class="points-list" id="pointCardList">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+
+      <!-- 右側：詳細・メモ入力フォーム -->
+      <div class="point-detail-panel" id="pointDetailPanel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:1.1rem; color:var(--primary-color);" id="currentPointTitle">地点を選択してください</h3>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-outline btn-sm" id="btnMovePointUp" title="順序を上へ">▲</button>
+            <button class="btn btn-outline btn-sm" id="btnMovePointDown" title="順序を下へ">▼</button>
+            <button class="btn btn-danger btn-sm" id="btnDeletePoint" title="地点を削除">削除</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">地点名</label>
+          <input type="text" class="form-input" id="inputPointName" placeholder="例: JR下灘駅">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="form-group">
+            <label class="form-label">通過・滞在時刻</label>
+            <input type="text" class="form-input" id="inputPointTime" placeholder="例: 12:10–12:15">
+          </div>
+          <div class="form-group">
+            <label class="form-label">座標 (緯度, 経度)</label>
+            <input type="text" class="form-input" id="inputPointCoords" placeholder="例: 33.6551644, 132.5893398">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">地点の説明・補足</label>
+          <input type="text" class="form-input" id="inputPointDesc" placeholder="例: JSONの滞在地点。座標がJR下灘駅の位置と一致">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">地点の感想・メモ (地図ピンにも表示されます)</label>
+          <textarea class="form-textarea" id="inputPointMemo" placeholder="道の景色、海風、路面状況、食事、気づいたことなどを自由に入力してください。この内容は地図ピンのポップアップにも反映されます。"></textarea>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <label class="form-label" style="margin:0;">📷 写真・🎥 動画メディア (タップで拡大・再生)</label>
+            <div style="display:flex; gap:6px;">
+              <label class="btn btn-accent btn-sm" style="cursor:pointer; margin:0;">
+                📷 写真を追加
+                <input type="file" id="photoFileInput" accept="image/*" multiple style="display:none;">
+              </label>
+              <label class="btn btn-outline btn-sm" style="cursor:pointer; margin:0; border-color:var(--accent-color); color:var(--accent-color);">
+                🎥 動画を追加
+                <input type="file" id="mediaVideoFileInput" accept="video/mp4,video/quicktime,video/webm,video/*" multiple style="display:none;">
+              </label>
+            </div>
+          </div>
+          <small style="color:var(--text-muted); display:block;">写真も動画（スマホ動画・ドラレコ動画）も、選択またはドロップでこの地点に追加できます。ブラウザ内に安全に保管されます。</small>
+          <div class="media-grid" id="pointMediaGrid"></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+          <div>
+            <label style="font-size:0.78rem; color:var(--text-muted);">動画 再生開始秒数</label>
+            <input type="number" class="form-input" id="inputVideoStartSec" min="0" placeholder="0" style="padding:6px 10px;">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color:var(--text-muted);">動画 再生終了秒数 (0で最後まで)</label>
+            <input type="number" class="form-input" id="inputVideoEndSec" min="0" placeholder="0" style="padding:6px 10px;">
+          </div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2eaf0; padding-top:12px;">
+          <span style="font-size:0.85rem; color:var(--accent-color);" id="pointSaveStatus"></span>
+          <button class="btn btn-primary" id="btnSavePoint">この地点の内容を保存</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- タイトル・基本情報の編集モーダル -->
+<div class="modal-overlay" id="modalEditHeader">
+  <div class="modal-window">
+    <h3 class="modal-title">タイトル・基本情報の編集 <button class="btn btn-outline btn-sm modal-close">✕</button></h3>
+    <div class="form-group">
+      <label class="form-label">メインタイトル</label>
+      <input type="text" class="form-input" id="editMainTitle">
+    </div>
+    <div class="form-group">
+      <label class="form-label">サブタイトル</label>
+      <input type="text" class="form-input" id="editSubtitle">
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="form-group">
+        <label class="form-label">走行開始時刻</label>
+        <input type="text" class="form-input" id="editStatStart">
+      </div>
+      <div class="form-group">
+        <label class="form-label">帰着時刻</label>
+        <input type="text" class="form-input" id="editStatEnd">
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="form-group">
+        <label class="form-label">走行距離</label>
+        <input type="text" class="form-input" id="editStatDistance">
+      </div>
+      <div class="form-group">
+        <label class="form-label">主なエリア</label>
+        <input type="text" class="form-input" id="editStatArea">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">走行メモ・本文 (HTML改行対応)</label>
+      <textarea class="form-textarea" style="min-height:120px;" id="editOverview"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">注釈・補足文</label>
+      <input type="text" class="form-input" id="editOverviewNote">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline modal-close">キャンセル</button>
+      <button class="btn btn-primary" id="btnSaveHeaderModal">変更を保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ファイル取り込みモーダル -->
+<div class="modal-overlay" id="modalImport">
+  <div class="modal-window">
+    <h3 class="modal-title">ファイル取り込み (JSON / GPX / NMEA / 動画) <button class="btn btn-outline btn-sm modal-close">✕</button></h3>
+    <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:12px;">
+      GoogleマップのタイムラインJSON、ナビアプリのGPX/KML、ドラレコのNMEA（.NMEA/.nmea）、ドラレコ動画（.mp4/.mov）、またはプロジェクトJSONファイルをドラッグ＆ドロップまたは選択してください。複数ファイルまとめてのドロップにも対応しています。
+    </p>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📥</div>
+      <div style="font-weight:600; margin-bottom:4px;">ファイルをここにドラッグ＆ドロップ</div>
+      <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">対応: .json, .gpx, .kml, .nmea, .mp4, .mov</div>
+      <label class="btn btn-accent btn-sm" style="cursor:pointer;">
+        ファイルを選択
+        <input type="file" id="fileImportInput" accept=".json,.gpx,.kml,.nmea,.log,.txt,.mp4,.mov,video/mp4,video/quicktime,video/webm,application/json,text/xml,text/plain" multiple style="display:none;">
+      </label>
     </div>
 
-    <div class="section no-print">
-        <h3>食事データベース管理 <button onclick="toggleGuidance('foodDatabaseGuidance')"
-                style="font-size:0.6em; background-color:#5bc0de; color:white; padding:4px 8px; vertical-align:middle;">📖
-                使い方</button></h3>
-        <div id="foodDatabaseGuidance" class="guidance-content">
-            <b>【食事データベース管理 使い方】</b><br>
-            「食事入力」で使う食品リストを管理・追加・修正できます。<br>
-            <b>新規追加:</b> 情報を入力し「保存/追加」ボタンを押してください。<br>
-            <b>修正・削除:</b>
-            「データベースから呼出」を押してリストから食品を選ぶと情報が反映されます。修正した上で「保存/追加」を押すと上書きされ、「削除」を押すとリストから完全に消去されます。（過去の食事履歴には影響しません）<br>
-            <b>確認:</b> 「📚 登録食品リストを見る/隠す」ボタンで現在登録されている食品の一覧を確認できます。
-        </div>
-        <button onclick="loadFoodListForSelect()">データベースから呼出</button><br>
-        <select id="foodSelect" style="display:none;" onchange="selectFood()"></select><br id="foodSelectBr"
-            style="display:none;">
-
-        カテゴリ:<input type="text" id="foodCategory" placeholder="例：A 材料商品" list="categoryList" style="width:120px;">
-        <datalist id="categoryList">
-            <option value="A 材料商品">
-            <option value="B 外食">
-            <option value="C 中食・惣菜">
-        </datalist><br>
-        商品・品目名:<input type="text" id="foodName" placeholder="例：醤油ラーメン" style="width:200px;"><br>
-        単位:<input type="text" id="foodUnit" placeholder="例：100g, 1人前" style="width:100px;"><br>
-        塩分(g):<input type="number" step="0.1" id="foodSalt" style="width:80px;"><br>
-        備考:<input type="text" id="foodMemo" placeholder="補足情報" style="width:200px;"><br>
-        <input type="hidden" id="foodId">
-
-        <button onclick="saveFood()" style="background:#dff0d8;">保存/追加</button>
-        <button onclick="deleteFood()" style="background:#f2dede;">削除</button>
-        <button onclick="toggleFoodDatabase()">📚 登録食品リストを見る/隠す</button>
-
-        <div id="foodDatabaseList" style="display:none; margin-top:10px;"></div>
+    <div style="margin-top:16px;">
+      <label class="form-label">取り込みオプション</label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:0.88rem; cursor:pointer; margin-bottom:6px;">
+        <input type="radio" name="importMode" value="replace" checked>
+        新しいツーリング記録として完全に置き換える
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:0.88rem; cursor:pointer;">
+        <input type="radio" name="importMode" value="merge">
+        現在の記録に軌跡と地点を追加（統合）する
+      </label>
     </div>
 
-    <div class="section no-print" style="border-color: #5bc0de;">
-        <h3>データ引継ぎ（バックアップ・復元） <button onclick="toggleGuidance('dataTransferGuidance')"
-                style="font-size:0.6em; background-color:#5bc0de; color:white; padding:4px 8px; vertical-align:middle;">📖
-                使い方</button></h3>
-        <div id="dataTransferGuidance" class="guidance-content">
-            <b>【データ引継ぎ（バックアップ・復元） 使い方】</b><br>
-            機種変更などで端末間でデータを移動させたい場合に使います。<br>
-            <b>書き出す（現在の端末）:</b> 「⬇️ データをファイルに書き出す」ボタンを押し、バックアップファイルを保存します。そのファイルをメールやクラウド等で新しい端末に送ります。<br>
-            <b>読み込む（新しい端末）:</b> 受け取ったバックアップファイルを「ファイルを選択」から選び、「⬆️ ファイルからデータを読み込む」ボタンを押すと、すべてのデータが復元されます。<br>
-            ※読み込むと現在の端末にあるデータは上書きされるのでご注意ください。
-        </div>
-        <p style="font-size: 0.9em; margin-top:0;">端末間でデータを移動させたい場合に使います。出力した「バックアップファイル」をもう一方の端末で読み込んでください。</p>
-        <button onclick="exportData()" style="background-color:#5bc0de; color:white; font-weight:bold;">⬇️ データをファイルに書き出す</button>
-        <div style="margin-top: 10px;">
-            <input type="file" id="importFile" accept=".json,application/json" style="max-width: 200px;">
-            <button onclick="importData()" style="background-color:#f0ad4e; color:white; font-weight:bold;">⬆️ ファイルからデータを読み込む</button>
-        </div>
+    <div style="margin-top:14px;">
+      <label class="form-label">日付で絞り込む（タイムラインJSON用・任意）</label>
+      <input type="date" id="importDateFilter" style="width:100%; padding:8px; font-size:0.95rem; box-sizing:border-box;">
+      <div style="font-size:0.8rem; color:#666; margin-top:4px;">指定すると、その1日分だけを取り込みます。空欄なら全期間を取り込みます。</div>
     </div>
 
-    <div class="section no-print" style="border-color: #ebccd1;">
-        <button onclick="clearAll()" style="color:red;">⚠ 全データ削除</button>
-        <button onclick="injectTestData()" style="color:blue;">🧪 3週間分のテストデータを入れる</button>
+    <div class="modal-actions">
+      <button class="btn btn-outline modal-close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- プロジェクト保存・読込モーダル -->
+<div class="modal-overlay" id="modalProject">
+  <div class="modal-window">
+    <h3 class="modal-title">プロジェクト管理 (データ保存・呼び出し) <button class="btn btn-outline btn-sm modal-close">✕</button></h3>
+    <p style="font-size:0.88rem; color:var(--text-muted);">
+      編集中の内容をデータ化してパソコンにファイル保存（JSONダウンロード）したり、保存したファイルを呼び出して再編集できます。
+    </p>
+    <div style="display:flex; flex-direction:column; gap:12px; margin:16px 0;">
+      <div style="padding:12px; border:1px solid #dae5ea; border-radius:8px; background:#f8fafb;">
+        <h4 style="margin:0 0 6px; font-size:0.95rem;">① プロジェクトをJSONファイルとして保存</h4>
+        <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">
+          タイトル、統計、GPS軌跡、地点メモ、写真（Base64圧縮）をすべて含んだ完全バックアップファイルをダウンロードします。
+        </p>
+        <button class="btn btn-accent btn-sm" id="btnDownloadProjectJson">💾 プロジェクトJSONをダウンロード</button>
+      </div>
+
+      <div style="padding:12px; border:1px solid #dae5ea; border-radius:8px; background:#f8fafb;">
+        <h4 style="margin:0 0 6px; font-size:0.95rem;">② ブラウザ内スナップショット保存</h4>
+        <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:10px;">
+          このパソコンのブラウザローカルストレージへ即座に一時保管します（自動保存も行われています）。
+        </p>
+        <button class="btn btn-primary btn-sm" id="btnSaveBrowserStorage">ブラウザ内に今すぐ保存</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline modal-close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ブログ公開用エクスポート設定モーダル -->
+<div class="modal-overlay" id="modalExport">
+  <div class="modal-window">
+    <h3 class="modal-title">ブログ公開用HTML出力 (完全保護) <button class="btn btn-outline btn-sm modal-close">✕</button></h3>
+    <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:14px;">
+      ブログ公開用の単一HTMLファイルを生成します。編集UIは完全に削除され、閲覧者向けの美麗なレイアウトになります。以下の完全保護設定を適用して安全に公開できます。
+    </p>
+    
+    <div style="background:#f0f7fa; border:1px solid #bce1ee; border-radius:8px; padding:12px; margin-bottom:14px;">
+      <h4 style="margin:0 0 8px; font-size:0.92rem; color:var(--primary-color);">🛡️ 完全保護セキュリティ設定</h4>
+      
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.86rem; margin-bottom:8px; cursor:pointer;">
+        <input type="checkbox" id="protectContextMenu" checked style="margin-top:3px;">
+        <div>
+          <strong>右クリック・長押しメニューの禁止</strong><br>
+          <span style="color:var(--text-muted);">写真の無断保存やソースコード閲覧コンテキストメニューを抑制します。</span>
+        </div>
+      </label>
+
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.86rem; margin-bottom:8px; cursor:pointer;">
+        <input type="checkbox" id="protectTextSelect" checked style="margin-top:3px;">
+        <div>
+          <strong>テキスト選択・コピーの保護</strong><br>
+          <span style="color:var(--text-muted);">文章や感想の不用意な全選択・コピーを防止します。</span>
+        </div>
+      </label>
+
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.86rem; margin-bottom:8px; cursor:pointer;">
+        <input type="checkbox" id="protectShortcuts" checked style="margin-top:3px;">
+        <div>
+          <strong>開発者ツール・ソース表示ショートカットの抑止</strong><br>
+          <span style="color:var(--text-muted);">F12キー、Ctrl+U、Ctrl+Shift+I等のキー入力をブロックします。</span>
+        </div>
+      </label>
+
+      <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.86rem; cursor:pointer;">
+        <input type="checkbox" id="protectReadOnly" checked disabled style="margin-top:3px;">
+        <div>
+          <strong>編集コード・管理機能の完全物理除去</strong><br>
+          <span style="color:var(--text-muted);">編集フォーム、保存スクリプトはHTML内から物理的に除外されます。</span>
+        </div>
+      </label>
     </div>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('sw.js');
-            });
-        }
+    <div class="modal-actions">
+      <button class="btn btn-outline modal-close">キャンセル</button>
+      <button class="btn btn-protect" id="btnGenerateProtectedHtml">🛡️ 保護版HTMLをダウンロード</button>
+    </div>
+  </div>
+</div>
+
+<!-- 写真拡大ライトボックスモーダル -->
+<div class="lightbox-modal" id="lightboxModal">
+  <button class="lightbox-close" id="lightboxClose" title="閉じる (Esc)">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" title="前の写真 (←)">‹</button>
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" title="次の写真 (→)">›</button>
+  <div class="lightbox-content">
+    <img src="" alt="拡大写真" class="lightbox-img" id="lightboxImg">
+  </div>
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- トーストメッセージ -->
+<div id="toast"></div>
+
+<!-- Leaflet JS & App JS -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';document.head.appendChild(s);"></script>
+<script src="./app.js"></script>
 
-        // --- [0] 食事データベースの初期化と管理 ---
-        const initialFoodData = [
-            { category: "A 材料商品", name: "ラーメンスープ（液体・濃縮）", unit: "100g", salt: 12.5, memo: "平均的な市販品" },
-            { category: "A 材料商品", name: "ラーメンスープ（粉末）", unit: "100g", salt: 45, memo: "希釈して使用" },
-            { category: "A 材料商品", name: "ラーメン乾麺（かんすい含む）", unit: "100g", salt: 1.5, memo: "茹でる前の数値" },
-            { category: "A 材料商品", name: "カレールー（固形・中辛）", unit: "100g", salt: 10.2, memo: "1皿分は約2.0g" },
-            { category: "A 材料商品", name: "炊き込みご飯の素（液状）", unit: "100g", salt: 11, memo: "3合炊き用パック参照" },
-            { category: "A 材料商品", name: "チャーハンの素（粉末）", unit: "100g", salt: 35, memo: "1人前は約2.5g" },
-            { category: "A 材料商品", name: "コンソメ（固形）", unit: "100g", salt: 48, memo: "1個(5g)あたり2.4g" },
-            { category: "A 材料商品", name: "鶏ガラスープの素", unit: "100g", salt: 42, memo: "スプーン1杯で約1.8g" },
-            { category: "A 材料商品", name: "めんつゆ（3倍濃縮）", unit: "100g", salt: 11.5, memo: "" },
-            { category: "A 材料商品", name: "ウスターソース", unit: "100g", salt: 8.4, memo: "" },
-            { category: "A 材料商品", name: "濃口醤油", unit: "100g", salt: 14.5, memo: "" },
-            { category: "A 材料商品", name: "薄口醤油", unit: "100g", salt: 16, memo: "実は濃口より高い" },
-            { category: "A 材料商品", name: "味噌（米味噌）", unit: "100g", salt: 12, memo: "" },
-            { category: "A 材料商品", name: "マヨネーズ", unit: "100g", salt: 1.9, memo: "比較的低め" },
-            { category: "A 材料商品", name: "ケチャップ", unit: "100g", salt: 3.3, memo: "" },
-            { category: "A 材料商品", name: "焼肉のたれ", unit: "100g", salt: 6.5, memo: "" },
-            { category: "A 材料商品", name: "ドレッシング（和風）", unit: "100g", salt: 5.5, memo: "" },
-            { category: "A 材料商品", name: "パスタソース（ミートソース）", unit: "100g", salt: 2.2, memo: "" },
-            { category: "A 材料商品", name: "麻婆豆腐の素", unit: "100g", salt: 6.8, memo: "" },
-            { category: "A 材料商品", name: "豆板醤", unit: "100g", salt: 15, memo: "" },
-            { category: "A 材料商品", name: "粒入りマスタード", unit: "100g", salt: 4, memo: "" },
-            { category: "A 材料商品", name: "白だし", unit: "100g", salt: 10.5, memo: "" },
-            { category: "A 材料商品", name: "永谷園 お茶づけ海苔", unit: "100g", salt: 40, memo: "1袋(6g)あたり2.4g" },
-            { category: "A 材料商品", name: "ふりかけ（のりたま等）", unit: "100g", salt: 9, memo: "" },
-            { category: "A 材料商品", name: "塩昆布", unit: "100g", salt: 18, memo: "" },
-            { category: "A 材料商品", name: "梅干し（塩漬け）", unit: "100g", salt: 20, memo: "" },
-            { category: "A 材料商品", name: "スライスチーズ", unit: "100g", salt: 2.8, memo: "1枚あたり約0.4g" },
-            { category: "A 材料商品", name: "ハム（ロース）", unit: "100g", salt: 2.5, memo: "" },
-            { category: "A 材料商品", name: "ウインナーソーセージ", unit: "100g", salt: 1.9, memo: "" },
-            { category: "A 材料商品", name: "ベーコン", unit: "100g", salt: 2, memo: "" },
-            { category: "A 材料商品", name: "かまぼこ", unit: "100g", salt: 2.5, memo: "" },
-            { category: "A 材料商品", name: "ちくわ", unit: "100g", salt: 2.1, memo: "" },
-            { category: "A 材料商品", name: "魚肉ソーセージ", unit: "100g", salt: 1.7, memo: "" },
-            { category: "A 材料商品", name: "ツナ缶（油漬け）", unit: "100g", salt: 0.7, memo: "" },
-            { category: "A 材料商品", name: "カップヌードル（標準）", unit: "100g", salt: 5, memo: "製品1個分に相当" },
-            { category: "A 材料商品", name: "即席袋麺（醤油）", unit: "100g", salt: 5.8, memo: "" },
-            { category: "A 材料商品", name: "冷凍チャーハン", unit: "100g", salt: 1.3, memo: "1袋(450g)食べると5.8g" },
-            { category: "A 材料商品", name: "冷凍餃子", unit: "100g", salt: 1.1, memo: "" },
-            { category: "A 材料商品", name: "冷凍たこ焼き", unit: "100g", salt: 1.2, memo: "" },
-            { category: "A 材料商品", name: "インスタント味噌汁（生味噌）", unit: "100g", salt: 10, memo: "1食あたり約1.9g" },
-            { category: "A 材料商品", name: "ほんだし", unit: "100g", salt: 40, memo: "" },
-            { category: "A 材料商品", name: "豆乳（調整）", unit: "100g", salt: 0.2, memo: "" },
-            { category: "A 材料商品", name: "牛乳", unit: "100g", salt: 0.1, memo: "" },
-            { category: "A 材料商品", name: "食パン", unit: "100g", salt: 1.3, memo: "6枚切り1枚で約0.8g" },
-            { category: "A 材料商品", name: "バター（有塩）", unit: "100g", salt: 1.9, memo: "" },
-            { category: "A 材料商品", name: "マーガリン", unit: "100g", salt: 1.3, memo: "" },
-            { category: "A 材料商品", name: "オイスターソース", unit: "100g", salt: 12, memo: "" },
-            { category: "A 材料商品", name: "柚子胡椒", unit: "100g", salt: 20, memo: "" },
-            { category: "A 材料商品", name: "キムチ", unit: "100g", salt: 2.9, memo: "" },
-            { category: "A 材料商品", name: "メンマ（味付き）", unit: "100g", salt: 3, memo: "" },
-            { category: "B 外食：吉野家", name: "牛丼（並盛）", unit: "1人前", salt: 2.7, memo: "" },
-            { category: "B 外食：吉野家", name: "豚丼（並盛）", unit: "1人前", salt: 2.6, memo: "" },
-            { category: "B 外食：吉野家", name: "牛焼肉定食", unit: "1人前", salt: 5.3, memo: "味噌汁・お新香含む" },
-            { category: "B 外食：吉野家", name: "鉄板牛カルビ定食", unit: "1人前", salt: 4.8, memo: "" },
-            { category: "B 外食：吉野家", name: "お新香", unit: "1人前", salt: 1.5, memo: "" },
-            { category: "B 外食：ジョナサン", name: "タンドリーチキン＆メキシカンピラフ", unit: "1人前", salt: 6.8, memo: "人気メニュー" },
-            { category: "B 外食：ジョナサン", name: "和風おろしハンバーグ", unit: "1人前", salt: 4.2, memo: "" },
-            { category: "B 外食：ジョナサン", name: "豪州産タスマニアビーフ100%ハンバーグ", unit: "1人前", salt: 3.5, memo: "" },
-            { category: "B 外食：ジョナサン", name: "イタリアンホットサンド", unit: "1人前", salt: 3.2, memo: "" },
-            { category: "B 外食：ジョナサン", name: "盛岡冷麺", unit: "1人前", salt: 8.5, memo: "スープ完飲の場合" },
-            { category: "B 外食：ﾏｸﾄﾞﾅﾙﾄﾞ", name: "ビッグマック", unit: "1人前", salt: 2.6, memo: "" },
-            { category: "B 外食：ﾏｸﾄﾞﾅﾙﾄﾞ", name: "照り焼きマックバーガー", unit: "1人前", salt: 2.2, memo: "" },
-            { category: "B 外食：ﾏｸﾄﾞﾅﾙﾄﾞ", name: "フィレオフィッシュ", unit: "1人前", salt: 1.2, memo: "意外と低め" },
-            { category: "B 外食：ﾏｸﾄﾞﾅﾙﾄﾞ", name: "マックフライポテト(M)", unit: "1人前", salt: 0.8, memo: "" },
-            { category: "B 外食：ﾏｸﾄﾞﾅﾙﾄﾞ", name: "チキンマックナゲット(5P)", unit: "1人前", salt: 1.3, memo: "ソース含まず" },
-            { category: "B 外食：餃子の王将", name: "餃子（1枚6個）", unit: "1人前", salt: 1.1, memo: "タレ含まず" },
-            { category: "B 外食：餃子の王将", name: "炒飯", unit: "1人前", salt: 4.9, memo: "" },
-            { category: "B 外食：餃子の王将", name: "王将ラーメン", unit: "1人前", salt: 7, memo: "" },
-            { category: "B 外食：餃子の王将", name: "鶏の唐揚", unit: "1人前", salt: 3.2, memo: "" },
-            { category: "B 外食：餃子の王将", name: "天津飯（甘酢）", unit: "1人前", salt: 5.5, memo: "" },
-            { category: "B 外食：すき家", name: "牛丼（並盛）", unit: "1人前", salt: 2.5, memo: "" },
-            { category: "B 外食：すき家", name: "カレー（並盛）", unit: "1人前", salt: 6.5, memo: "" },
-            { category: "B 外食：すき家", name: "とろ〜り3種のチーズ牛丼", unit: "1人前", salt: 3.2, memo: "" },
-            { category: "B 外食：松屋", name: "牛めし（並盛）", unit: "1人前", salt: 2.1, memo: "味噌汁抜き数値" },
-            { category: "B 外食：松屋", name: "富士山豆腐の本格麻婆めし", unit: "1人前", salt: 5.2, memo: "" },
-            { category: "B 外食：松屋", name: "豚汁", unit: "1人前", salt: 3.5, memo: "" },
-            { category: "B 外食：ｻｲｾﾞﾘﾔ", name: "ミラノ風ドリア", unit: "1人前", salt: 2.3, memo: "" },
-            { category: "B 外食：ｻｲｾﾞﾘﾔ", name: "辛味チキン", unit: "1人前", salt: 1.5, memo: "" },
-            { category: "B 外食：ｻｲｾﾞﾘﾔ", name: "マルゲリータピザ", unit: "1人前", salt: 2.8, memo: "" },
-            { category: "B 外食：丸亀製麺", name: "ぶっかけうどん（並・温）", unit: "1人前", salt: 3.4, memo: "" },
-            { category: "B 外食：丸亀製麺", name: "釜揚げうどん（並）", unit: "1人前", salt: 3.3, memo: "つゆを含む" },
-            { category: "B 外食：丸亀製麺", name: "かしわ天", unit: "1個", salt: 0.6, memo: "" },
-            { category: "B 外食：ｺｺｲﾁ", name: "ポークカレー（普通）", unit: "1人前", salt: 3.3, memo: "" },
-            { category: "B 外食：ｺｺｲﾁ", name: "ロースカツカレー", unit: "1人前", salt: 4.1, memo: "" },
-            { category: "B 外食：大戸屋", name: "鶏と野菜の黒酢あん定食", unit: "1人前", salt: 4.9, memo: "味噌汁等含む" },
-            { category: "B 外食：大戸屋", name: "ほっけの炭火焼き定食", unit: "1人前", salt: 6.2, memo: "醤油・味噌汁含む" },
-            { category: "B 外食：ガスト", name: "チーズINハンバーグ", unit: "1人前", salt: 3.1, memo: "" },
-            { category: "B 外食：ガスト", name: "たっぷりマヨコーンピザ", unit: "1人前", salt: 3.8, memo: "" },
-            { category: "B 外食：てんや", name: "天丼", unit: "1人前", salt: 3.2, memo: "味噌汁含む" },
-            { category: "B 外食：はなまるうどん", name: "きつねうどん（中）", unit: "1人前", salt: 6.1, memo: "" },
-            { category: "B 外食：ﾓｽﾊﾞｰｶﾞｰ", name: "モスバーガー", unit: "1人前", salt: 2.3, memo: "" },
-            { category: "B 外食：ﾓｽﾊﾞｰｶﾞｰ", name: "テリヤキバーガー", unit: "1人前", salt: 2.4, memo: "" },
-            { category: "B 外食：KFC", name: "オリジナルチキン", unit: "1ピース", salt: 1.7, memo: "" },
-            { category: "B 外食：KFC", name: "チキンフィレバーガー", unit: "1人前", salt: 2.4, memo: "" },
-            { category: "B 外食：くら寿司", name: "熟成まぐろ", unit: "2貫", salt: 0.1, memo: "醤油含まず" },
-            { category: "B 外食：くら寿司", name: "特製茶碗蒸し", unit: "1人前", salt: 1.4, memo: "" },
-            { category: "B 外食：ﾐｽﾀｰﾄﾞｰﾅﾂ", name: "ポン・デ・リング", unit: "1個", salt: 0.6, memo: "" },
-            { category: "B 外食：ﾐｽﾀｰﾄﾞｰﾅﾂ", name: "オールドファッション", unit: "1個", salt: 0.7, memo: "" },
-            { category: "B 外食：CoCo壱番屋", name: "海老カツカレー", unit: "1人前", salt: 4.2, memo: "" },
-            { category: "B 外食：富士そば", name: "かけそば", unit: "1人前", salt: 5.2, memo: "" }
-        ];
-
-        function initFoodDatabase() {
-            let db = localStorage.getItem("foodDatabase");
-            if (!db) {
-                // IDを付与して保存
-                let initialDataWithId = initialFoodData.map((item, index) => {
-                    return {
-                        id: "food_" + new Date().getTime() + "_" + index,
-                        ...item
-                    };
-                });
-                localStorage.setItem("foodDatabase", JSON.stringify(initialDataWithId));
-            }
-        }
-
-        function updateFoodDatalist() {
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            let datalist = document.getElementById("foodList");
-            if (!datalist) return;
-
-            let html = "";
-            db.forEach(f => {
-                html += `<option value="${f.name}">${f.category} [${f.unit}: ${f.salt}g]</option>`;
-            });
-            datalist.innerHTML = html;
-        }
-
-        // 初期化実行
-        initFoodDatabase();
-
-        // --- [1] 食事データの操作 ---
-
-        // グローバル変数で直前に選択した食品名を記憶
-        let lastMealDesc = "";
-
-        function clearMealInput() {
-            if (document.getElementById("mealCategory")) document.getElementById("mealCategory").value = "";
-            document.getElementById("mealUnit").value = "";
-            document.getElementById("mealBaseSalt").value = "";
-            document.getElementById("mealDesc").value = "";
-            document.getElementById("mealAmount").value = "1";
-            document.getElementById("salt").value = "";
-            document.getElementById("mealId").value = "";
-            lastMealDesc = "";
-        }
-
-        function onMealFoodSelect() {
-            let desc = document.getElementById("mealDesc").value;
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            let food = db.find(f => f.name === desc);
-
-            if (food) {
-                // DBに存在する場合はカテゴリ, a, bを自動補完
-                if (document.getElementById("mealCategory")) document.getElementById("mealCategory").value = food.category || "";
-                document.getElementById("mealUnit").value = food.unit;
-                document.getElementById("mealBaseSalt").value = food.salt;
-
-                // 初めて(または別の)食品を選択した際はdを基準値にする
-                if (desc !== lastMealDesc) {
-                    let match = food.unit.match(/^([0-9.]+)/);
-                    let baseAmount = match ? parseFloat(match[1]) : 1;
-                    document.getElementById("mealAmount").value = baseAmount;
-                }
-
-                lastMealDesc = desc;
-                calculateSaltSentence();
-            } else {
-                // 新しい入力中の場合は一旦何もしない(手入力を待つ)
-                lastMealDesc = desc;
-            }
-        }
-
-        function calculateSaltSentence() {
-            let baseSaltStr = document.getElementById("mealBaseSalt").value;
-            let amountStr = document.getElementById("mealAmount").value;
-            let unitStr = document.getElementById("mealUnit").value;
-
-            let baseSalt = parseFloat(baseSaltStr);
-            let currentAmount = parseFloat(amountStr);
-
-            // aとbとdが入力されていれば計算
-            if (!isNaN(baseSalt) && !isNaN(currentAmount) && unitStr) {
-                let match = unitStr.match(/^([0-9.]+)/);
-                let baseAmount = match ? parseFloat(match[1]) : 1;
-
-                let calcSalt = (baseSalt / baseAmount) * currentAmount;
-                document.getElementById("salt").value = calcSalt.toFixed(1);
-            } else {
-                // 計算不能な場合は空または手入力待ち
-                document.getElementById("salt").value = "";
-            }
-        }
-
-        // --- [0.1] ガイダンスの開閉 ---
-        function toggleGuidance(id) {
-            const section = document.getElementById(id);
-            if (section.style.display === "none" || section.style.display === "") {
-                section.style.display = "block";
-            } else {
-                section.style.display = "none";
-            }
-        }
-
-        // --- [0.5] 食事データベース管理の操作 ---
-
-        function clearFoodInput() {
-            document.getElementById("foodCategory").value = "";
-            document.getElementById("foodName").value = "";
-            document.getElementById("foodUnit").value = "";
-            document.getElementById("foodSalt").value = "";
-            document.getElementById("foodMemo").value = "";
-            document.getElementById("foodId").value = "";
-        }
-
-        function loadFoodListForSelect() {
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            const select = document.getElementById("foodSelect");
-            const br = document.getElementById("foodSelectBr");
-
-            if (db.length > 0) {
-                // カテゴリ名 > 商品名 でソート
-                db.sort((a, b) => {
-                    if (a.category < b.category) return -1;
-                    if (a.category > b.category) return 1;
-                    if (a.name < b.name) return -1;
-                    if (a.name > b.name) return 1;
-                    return 0;
-                });
-
-                let optionsHtml = '<option value="">-- 新しく追加・未選択 --</option>';
-                db.forEach(f => {
-                    optionsHtml += `<option value="${f.id}">【${f.category}】${f.name}</option>`;
-                });
-                select.innerHTML = optionsHtml;
-                select.style.display = "inline-block";
-                br.style.display = "inline";
-                clearFoodInput();
-            } else {
-                select.style.display = "none";
-                br.style.display = "none";
-                alert("データベースに食品が登録されていません。");
-            }
-        }
-
-        function selectFood() {
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            let id = document.getElementById("foodSelect").value;
-            if (!id) {
-                clearFoodInput();
-                return;
-            }
-            let data = db.find(f => f.id === id);
-            if (data) {
-                document.getElementById("foodCategory").value = data.category || "";
-                document.getElementById("foodName").value = data.name || "";
-                document.getElementById("foodUnit").value = data.unit || "";
-                document.getElementById("foodSalt").value = data.salt || 0;
-                document.getElementById("foodMemo").value = data.memo || "";
-                document.getElementById("foodId").value = data.id;
-            }
-        }
-
-        function saveFood() {
-            let category = document.getElementById("foodCategory").value.trim();
-            let name = document.getElementById("foodName").value.trim();
-            let unit = document.getElementById("foodUnit").value.trim();
-            let salt = parseFloat(document.getElementById("foodSalt").value);
-            let memo = document.getElementById("foodMemo").value.trim();
-            let id = document.getElementById("foodId").value;
-
-            if (!name) { alert("商品・品目名を入力してください。"); return; }
-            if (isNaN(salt)) { alert("塩分(g)を正しく入力してください。"); return; }
-
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-
-            if (id) {
-                // 更新処理か新規コピーか確認
-                if (confirm("上書き保存しますか？\n（[キャンセル]を押すと、現在の内容で別データとして新規追加します）")) {
-                    let idx = db.findIndex(f => f.id.toString() === id.toString());
-                    if (idx !== -1) {
-                        db[idx] = { id: id, category, name, unit, salt, memo };
-                        alert("データを上書き更新しました。");
-                    }
-                } else {
-                    // キャンセル時は新規追加
-                    let newEntry = {
-                        id: "food_" + new Date().getTime(),
-                        category, name, unit, salt, memo
-                    };
-                    db.push(newEntry);
-                    alert("別データとして新規追加しました。");
-                }
-            } else {
-                // 新規追加
-                // 同名チェック
-                if (db.some(f => f.name === name)) {
-                    if (!confirm("既に同じ商品名が登録されています。追加してよろしいですか？")) return;
-                }
-                let newEntry = {
-                    id: "food_" + new Date().getTime(),
-                    category, name, unit, salt, memo
-                };
-                db.push(newEntry);
-                alert("データを新規追加しました。");
-            }
-
-            localStorage.setItem("foodDatabase", JSON.stringify(db));
-            updateFoodDatalist();
-            clearFoodInput();
-
-            // UIの更新
-            if (document.getElementById("foodSelect").style.display !== "none") {
-                loadFoodListForSelect();
-            }
-            showFoodDatabase();
-        }
-
-        function deleteFood() {
-            let id = document.getElementById("foodId").value;
-            if (!id) { alert("削除するデータが選択されていません。（リストから呼出してください）"); return; }
-
-            if (!confirm("選択中の食品データをデータベースから削除しますか？\n（過去の食事記録から消えるわけではありません）")) return;
-
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            db = db.filter(f => f.id.toString() !== id.toString());
-            localStorage.setItem("foodDatabase", JSON.stringify(db));
-
-            updateFoodDatalist();
-            clearFoodInput();
-            loadFoodListForSelect();
-            showFoodDatabase();
-            alert("削除しました。");
-        }
-
-        function toggleFoodDatabase() {
-            const list = document.getElementById("foodDatabaseList");
-            if (list.style.display === "none" || list.style.display === "") {
-                showFoodDatabase();
-                list.style.display = "block";
-            } else {
-                list.style.display = "none";
-            }
-        }
-
-        function showFoodDatabase() {
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            let listArea = document.getElementById("foodDatabaseList");
-
-            if (db.length === 0) {
-                listArea.innerHTML = "<p>登録データがありません。</p>";
-                return;
-            }
-
-            // カテゴリごとにグループ化
-            let grouped = {};
-            db.forEach(f => {
-                let cat = f.category || "未分類";
-                if (!grouped[cat]) grouped[cat] = [];
-                grouped[cat].push(f);
-            });
-
-            let html = "";
-            // カテゴリ名でソート
-            Object.keys(grouped).sort().forEach(cat => {
-                html += `<div class="item" style="border: 1px solid #ddd; background: #fafafa; border-radius:8px; margin-bottom:10px;">`;
-                html += `<h4 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom:5px;">${cat}</h4>`;
-
-                let items = grouped[cat];
-                items.sort((a, b) => a.name.localeCompare(b.name));
-
-                let tableHtml = `<table style="width:100%; border-collapse: collapse; font-size:0.9em;">
-            <tr style="background-color:#eee;">
-                <th style="padding:4px; border:1px solid #ccc; text-align:left;">商品・品目名</th>
-                <th style="padding:4px; border:1px solid #ccc; text-align:center;">基準単位</th>
-                <th style="padding:4px; border:1px solid #ccc; text-align:right;">塩分(g)</th>
-            </tr>`;
-
-                items.forEach(f => {
-                    let memoStr = f.memo ? `<br><span style="font-size:0.8em; color:#666;">${f.memo}</span>` : "";
-                    tableHtml += `<tr>
-                <td style="padding:4px; border:1px solid #ccc;">${f.name}${memoStr}</td>
-                <td style="padding:4px; border:1px solid #ccc; text-align:center;">${f.unit}</td>
-                <td style="padding:4px; border:1px solid #ccc; text-align:right;">${parseFloat(f.salt).toFixed(1)}</td>
-            </tr>`;
-                });
-                tableHtml += `</table>`;
-                html += tableHtml + `</div>`;
-            });
-
-            listArea.innerHTML = html;
-        }
-
-        function toggleMeals() {
-            const list = document.getElementById("mealList");
-            if (list.style.display === "none" || list.style.display === "") {
-                showMeals();
-                list.style.display = "block";
-            } else {
-                list.style.display = "none";
-            }
-        }
-
-        function loadMeal() {
-            const mealDateValue = document.getElementById("mealDate").value;
-            if (!mealDateValue) { alert("日付を選択してください"); return; }
-
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-
-            // 互換性: 過去データにIDがない場合は付与
-            let updated = false;
-            meals.forEach(m => {
-                if (!m.id) { m.id = new Date().getTime() + Math.random(); updated = true; }
-            });
-            if (updated) localStorage.setItem("meals", JSON.stringify(meals));
-
-            let data = meals.filter(m => m.date === mealDateValue);
-
-            const select = document.getElementById("mealSelect");
-            const br = document.getElementById("mealSelectBr");
-
-            // 日付変更（データ呼出）時に下部の入力項目はリセットしておく
-            clearMealInput();
-
-            if (data.length > 0) {
-                let optionsHtml = '<option value="">-- 新しく追加する場合はこちらを選択 --</option>';
-                data.forEach(m => {
-                    optionsHtml += `<option value="${m.id}">${m.desc} (${m.salt}g)</option>`;
-                });
-                select.innerHTML = optionsHtml;
-                select.style.display = "inline-block";
-                br.style.display = "inline";
-                clearMealInput();
-                alert(`${data.length}件のデータが見つかりました。\nリストから選んで修正・削除するか、そのまま内容を入力して「保存/追加」ボタンで新しく追加できます。`);
-            } else {
-                select.style.display = "none";
-                br.style.display = "none";
-                clearMealInput();
-                alert("該当する日付の食事データはありません。新しく入力して追加してください。");
-            }
-        }
-
-        function selectMeal() {
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-            let id = document.getElementById("mealSelect").value;
-            if (!id) {
-                clearMealInput();
-                return;
-            }
-            let data = meals.find(m => m.id.toString() === id);
-            if (data) {
-                document.getElementById("mealDesc").value = data.desc;
-                lastMealDesc = data.desc;
-
-                // DBに存在するかチェックして、摂取量を逆算して表示
-                let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-                let food = db.find(f => f.name === data.desc);
-
-                if (food) {
-                    if (document.getElementById("mealCategory")) document.getElementById("mealCategory").value = food.category || "";
-                    document.getElementById("mealUnit").value = food.unit;
-                    document.getElementById("mealBaseSalt").value = food.salt;
-
-                    let match = food.unit.match(/^([0-9.]+)/);
-                    let baseAmount = match ? parseFloat(match[1]) : 1;
-
-                    // 保存されていた塩分 ÷ (基準塩分 / 基準量) = 前回入力したであろう重量
-                    let currentAmount = (data.salt / (parseFloat(food.salt) / baseAmount));
-                    currentAmount = Math.round(currentAmount * 10) / 10;
-
-                    document.getElementById("mealAmount").value = currentAmount;
-                } else {
-                    document.getElementById("mealUnit").value = "";
-                    document.getElementById("mealBaseSalt").value = "";
-                    document.getElementById("mealAmount").value = "1"; // 既存データが不明な場合は1
-                }
-
-                document.getElementById("salt").value = data.salt;
-                document.getElementById("mealId").value = data.id;
-            }
-        }
-
-        function saveMeal() {
-            const dateVal = document.getElementById("mealDate").value;
-            const descVal = document.getElementById("mealDesc").value;
-            const saltVal = document.getElementById("salt").value;
-            const idVal = document.getElementById("mealId").value;
-
-            if (!dateVal) { alert("日付を入れてください"); return; }
-            // 摂取量(e)が存在しない場合でも、c欄があれば手入力として許容する(c, eのみでの登録)
-            if (isNaN(parseFloat(saltVal))) {
-                if (confirm("塩分量(e)が計算されていません。手動入力として塩分量を 0g で登録しますか？\n(e欄を手入力することも可能です)")) {
-                    document.getElementById("salt").value = "0";
-                    saltVal = "0";
-                } else {
-                    return;
-                }
-            }
-
-            // DBへの自動登録チェック
-            // 新しい食品名(c)で、単位(a)と基準塩分(b)が手入力されていればDBに追加
-            let db = JSON.parse(localStorage.getItem("foodDatabase")) || [];
-            let foodExists = db.some(f => f.name === descVal);
-            let unitVal = document.getElementById("mealUnit").value.trim();
-            let baseSaltVal = parseFloat(document.getElementById("mealBaseSalt").value);
-            let catValElem = document.getElementById("mealCategory");
-            let catVal = (catValElem && catValElem.value.trim() !== "") ? catValElem.value.trim() : "追加登録（自動）";
-
-            if (!foodExists && unitVal && !isNaN(baseSaltVal)) {
-                let newDbEntry = {
-                    id: "food_" + new Date().getTime(),
-                    category: catVal,
-                    name: descVal,
-                    unit: unitVal,
-                    salt: baseSaltVal,
-                    memo: "食事入力から追加"
-                };
-                db.push(newDbEntry);
-                localStorage.setItem("foodDatabase", JSON.stringify(db));
-                updateFoodDatalist(); // プルダウン更新
-            }
-
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-
-            if (idVal) {
-                // 更新か新規か
-                if (confirm("既存のデータを上書き保存しますか？\n（[キャンセル]を押すと、同じ内容で新しく追加します）")) {
-                    let index = meals.findIndex(m => m.id.toString() === idVal.toString());
-                    if (index !== -1) {
-                        meals[index].desc = descVal;
-                        meals[index].salt = parseFloat(saltVal) || 0;
-                        alert("該当の食事データを更新しました。");
-                    }
-                } else {
-                    let newEntry = {
-                        id: new Date().getTime(),
-                        date: dateVal,
-                        desc: descVal,
-                        salt: parseFloat(saltVal) || 0
-                    };
-                    meals.push(newEntry);
-                    alert("別データとしてコピー追加しました。");
-                }
-            } else {
-                if (!confirm("入力された内容で食事データを新規追加しますか？")) return;
-                // 新規追加
-                let newEntry = {
-                    id: new Date().getTime(),
-                    date: dateVal,
-                    desc: descVal,
-                    salt: parseFloat(saltVal) || 0
-                };
-                meals.push(newEntry);
-                alert("食事データを追加保存しました。");
-            }
-            localStorage.setItem("meals", JSON.stringify(meals));
-            showMeals();
-            drawSaltMeter();
-            drawGraph();
-
-            // 保存後はプルダウンを再読み込みしつつ、入力欄はクリアした状態にする
-            const select = document.getElementById("mealSelect");
-            if (select.style.display !== "none") {
-                loadMeal();
-            } else {
-                clearMealInput();
-            }
-        }
-
-        function deleteCurrentMeal() {
-            const idVal = document.getElementById("mealId").value;
-            if (!idVal) { alert("削除するデータが選択されていません。（リストから選んでください）"); return; }
-
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-            if (confirm("表示中の食事データを削除しますか？\n（この操作は取り消せません）")) {
-                meals = meals.filter(m => m.id.toString() !== idVal.toString());
-                localStorage.setItem("meals", JSON.stringify(meals));
-                showMeals();
-                drawSaltMeter();
-                drawGraph();
-
-                // 削除後に入力欄をリセットし、プルダウンを更新
-                clearMealInput();
-                const select = document.getElementById("mealSelect");
-                if (select.style.display !== "none") {
-                    loadMeal();
-                } else {
-                    alert("食事データを削除しました。");
-                }
-            }
-        }
-
-        function showMeals() {
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-            // 互換性: id付与
-            meals.forEach(m => { if (!m.id) m.id = new Date().getTime() + Math.random(); });
-
-            // 日付で降順ソート
-            meals.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            // 日付ごとにグループ化
-            let grouped = {};
-            meals.forEach(m => {
-                if (!grouped[m.date]) grouped[m.date] = [];
-                grouped[m.date].push(m);
-            });
-
-            let html = "";
-            for (let date in grouped) {
-                let total = 0;
-                html += `<div class="item" style="border: 2px solid #ddd; background: #fafafa; border-radius:8px;">`;
-                html += `<h4 style="margin-top:0; border-bottom: 2px solid #ccc; padding-bottom:5px;">${date}</h4>`;
-                grouped[date].forEach(m => {
-                    total += Number(m.salt);
-                    html += `<div style="padding-left:10px; margin-bottom:8px;">
-                <span style="display:inline-block; width:calc(100% - 60px);">・${m.desc} : ${m.salt}g</span>
-                <button onclick="deleteMealById('${m.id}')" style="padding:4px 8px; font-size:12px; background:#f2dede;">削</button>
-            </div>`;
-                });
-                html += `<div style="font-weight:bold; font-size:1.1em; color:#d9534f; text-align:right; margin-top:10px;">総塩分量: ${total.toFixed(1)}g</div>`;
-                html += `</div>`;
-            }
-            document.getElementById("mealList").innerHTML = html;
-        }
-
-        function deleteMealById(id) {
-            if (!confirm("該当の食事データを履歴から削除しますか？")) return;
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-            meals = meals.filter(m => m.id.toString() !== id.toString());
-            localStorage.setItem("meals", JSON.stringify(meals));
-            showMeals();
-            drawSaltMeter();
-            drawGraph();
-            if (document.getElementById("mealId").value === id.toString()) {
-                clearMealInput();
-            }
-            const select = document.getElementById("mealSelect");
-            if (select.style.display !== "none") {
-                loadMeal();
-            } else {
-                alert("食事データを削除しました。");
-            }
-        }
-
-        // --- [2] 血圧・体重データの操作 ---
-
-        function clearVitalInput() {
-            document.getElementById("amHigh").value = "";
-            document.getElementById("amLow").value = "";
-            document.getElementById("pmHigh").value = "";
-            document.getElementById("pmLow").value = "";
-            document.getElementById("weight").value = "";
-        }
-
-        function toggleVitals() {
-            const list = document.getElementById("vitalList");
-            if (list.style.display === "none" || list.style.display === "") {
-                showVitals();
-                list.style.display = "block";
-            } else {
-                list.style.display = "none";
-            }
-        }
-
-        function loadVital() {
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-            let dateVal = document.getElementById("vitalDate").value;
-
-            // 日付変更（呼出）時に入力欄をリセット
-            clearVitalInput();
-
-            let data = vitals.find(v => v.date === dateVal);
-            if (data) {
-                document.getElementById("amHigh").value = data.amHigh;
-                document.getElementById("amLow").value = data.amLow;
-                document.getElementById("pmHigh").value = data.pmHigh;
-                document.getElementById("pmLow").value = data.pmLow;
-                document.getElementById("weight").value = data.weight;
-                alert(`${dateVal} の血圧・体重データを呼び出しました。`);
-            } else {
-                alert(`指定した ${dateVal} のデータはありません。新規入力してください。`);
-            }
-        }
-
-        function saveVital() {
-            let dateVal = document.getElementById("vitalDate").value;
-            if (!dateVal) { alert("日付を入れてください"); return; }
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-            let index = vitals.findIndex(v => v.date === dateVal);
-            let newEntry = {
-                date: dateVal,
-                amHigh: parseInt(document.getElementById("amHigh").value) || 0,
-                amLow: parseInt(document.getElementById("amLow").value) || 0,
-                pmHigh: parseInt(document.getElementById("pmHigh").value) || 0,
-                pmLow: parseInt(document.getElementById("pmLow").value) || 0,
-                weight: parseFloat(document.getElementById("weight").value) || 0
-            };
-            if (index !== -1) {
-                if (!confirm(`${dateVal} のデータを上書き更新しますか？`)) return;
-                vitals[index] = newEntry;
-                alert("血圧・体重データを更新しました。");
-            } else {
-                if (!confirm(`${dateVal} のデータとして新規保存しますか？`)) return;
-                vitals.push(newEntry);
-                alert("血圧・体重データを保存しました。");
-            }
-            localStorage.setItem("vitals", JSON.stringify(vitals));
-            showVitals();
-            drawGraph();
-            clearVitalInput(); // 保存後リセット
-        }
-
-        function deleteCurrentVital() {
-            let dateVal = document.getElementById("vitalDate").value;
-            if (!dateVal) { alert("日付を選択してください。"); return; }
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-            if (!vitals.find(v => v.date === dateVal)) { alert("削除するデータがありません。"); return; }
-
-            if (confirm(`${dateVal} の血圧・体重データを削除しますか？\n（この操作は取り消せません）`)) {
-                vitals = vitals.filter(v => v.date !== dateVal);
-                localStorage.setItem("vitals", JSON.stringify(vitals));
-                showVitals();
-                drawGraph();
-                clearVitalInput(); // 削除後リセット
-                alert("血圧・体重データを削除しました。");
-            }
-        }
-
-        function showVitals() {
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-            vitals.sort((a, b) => new Date(b.date) - new Date(a.date));
-            let html = "";
-            vitals.forEach((v) => {
-                html += `<div class="item">
-            <b>${v.date}</b> 朝:${v.amHigh}/${v.amLow} 夕:${v.pmHigh}/${v.pmLow} 体重:${v.weight}kg
-            <button onclick="deleteVital('${v.date}')">削除</button>
-        </div>`;
-            });
-            document.getElementById("vitalList").innerHTML = html;
-        }
-
-        function deleteVital(date) {
-            if (!confirm(`${date} の血圧・体重データを履歴から削除しますか？`)) return;
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-            vitals = vitals.filter(v => v.date !== date);
-            localStorage.setItem("vitals", JSON.stringify(vitals));
-            showVitals();
-            drawGraph();
-            alert("血圧・体重データを削除しました。");
-        }
-
-        // --- [3] 視覚化 ---
-
-        function initSaltLimitOptions() {
-            let select = document.getElementById("saltLimit");
-            if (!select) return;
-            let html = "";
-            for (let i = 0; i <= 15; i += 0.5) {
-                html += `<option value="${i.toFixed(1)}">${i.toFixed(1)}g</option>`;
-            }
-            select.innerHTML = html;
-            let savedLimit = localStorage.getItem("saltLimit") || "6.0";
-            select.value = parseFloat(savedLimit).toFixed(1);
-        }
-
-        function saveSaltLimit() {
-            let limit = document.getElementById("saltLimit").value;
-            localStorage.setItem("saltLimit", limit);
-        }
-
-        function drawSaltMeter() {
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-            let mealDateInput = document.getElementById("mealDate").value;
-            let targetDate = mealDateInput || new Date().toISOString().split("T")[0];
-
-            let total = 0;
-            meals.forEach(m => {
-                if (m.date === targetDate) total += Number(m.salt);
-            });
-            let limit = parseFloat(localStorage.getItem("saltLimit")) || 6.0; 
-            let maxScale = 15; // メーター最大値
-            let percent = (total / maxScale) * 100;
-            if (percent > 100) percent = 100;
-
-            let bar = document.getElementById("saltBar");
-            bar.style.width = percent + "%";
-
-            // 上限値ラインの位置更新
-            let limitLine = document.getElementById("saltLimitLine");
-            if (limitLine) {
-                limitLine.style.left = ((limit / maxScale) * 100) + "%";
-            }
-
-            // 上限値までを青、プラス1までを黄色、プラス1からは赤
-            if (total <= limit) {
-                bar.style.backgroundColor = "#337ab7"; // 青
-            } else if (total <= limit + 1.0) {
-                bar.style.backgroundColor = "#f0ad4e"; // 黄
-            } else {
-                bar.style.backgroundColor = "#d9534f"; // 赤
-            }
-
-            let displayDate = targetDate === new Date().toISOString().split("T")[0] ? "今日の合計" : `${targetDate}の合計`;
-            document.getElementById("saltText").innerHTML =
-                `${displayDate}: <span class="total-salt">${total.toFixed(1)}g</span> / 上限値${limit.toFixed(1)}g`;
-        }
-
-        // グラフ期間の初期値セットと更新用
-        function initGraphDates() {
-            let savedStart = localStorage.getItem("graphStartDate");
-            let savedEnd = localStorage.getItem("graphEndDate");
-            
-            if (savedStart && savedEnd) {
-                document.getElementById("graphStartDate").value = savedStart;
-                document.getElementById("graphEndDate").value = savedEnd;
-            } else {
-                let endDate = new Date();
-                let startDate = new Date();
-                startDate.setDate(endDate.getDate() - 13); // デフォルト2週間
-
-                document.getElementById("graphEndDate").value = endDate.toISOString().split("T")[0];
-                document.getElementById("graphStartDate").value = startDate.toISOString().split("T")[0];
-            }
-        }
-
-        function updateGraphRange() {
-            drawGraph();
-        }
-
-        function drawGraph() {
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-
-            // 指定された期間を取得
-            let startStr = document.getElementById("graphStartDate").value;
-            let endStr = document.getElementById("graphEndDate").value;
-
-            // 未設定の場合は初期値を設定
-            if (!startStr || !endStr) {
-                initGraphDates();
-                startStr = document.getElementById("graphStartDate").value;
-                endStr = document.getElementById("graphEndDate").value;
-            }
-
-            let startDate = new Date(startStr);
-            let endDate = new Date(endStr);
-
-            // 開始日が終了日より未来の場合は入れ替える
-            if (startDate > endDate) {
-                let temp = startDate;
-                startDate = endDate;
-                endDate = temp;
-                document.getElementById("graphStartDate").value = startDate.toISOString().split("T")[0];
-                document.getElementById("graphEndDate").value = endDate.toISOString().split("T")[0];
-            }
-
-            // 期間の日数差を計算（最大でも直近の数百日程度を想定）
-            let diffTime = Math.abs(endDate - startDate);
-            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            // 表示日数が多すぎるとグラフが潰れるので最大100日程度に制限
-            if (diffDays > 100) {
-                alert("表示期間が長すぎます。100日以内に制限されました。");
-                startDate = new Date(endDate);
-                startDate.setDate(endDate.getDate() - 99);
-                diffDays = 99;
-                document.getElementById("graphStartDate").value = startDate.toISOString().split("T")[0];
-            }
-
-            // 確定したグラフ期間を保存
-            localStorage.setItem("graphStartDate", document.getElementById("graphStartDate").value);
-            localStorage.setItem("graphEndDate", document.getElementById("graphEndDate").value);
-
-            let printPeriodSpan = document.getElementById("printGraphPeriod");
-            if (printPeriodSpan) {
-                let sStr = startDate.toISOString().split("T")[0].replace(/-/g, '/');
-                let eStr = endDate.toISOString().split("T")[0].replace(/-/g, '/');
-                printPeriodSpan.innerText = `（対象期間: ${sStr} 〜 ${eStr}）`;
-            }
-
-            let labels = [];
-            let bpAmData = [];
-            let bpPmData = [];
-            let saltData = [];
-            let weightData = [];
-
-            let dailySalt = {};
-            meals.forEach(m => {
-                if (!dailySalt[m.date]) dailySalt[m.date] = 0;
-                dailySalt[m.date] += Number(m.salt);
-            });
-
-            // startDate から endDate まで1日ずつ進める
-            for (let i = 0; i <= diffDays; i++) {
-                let d = new Date(startDate);
-                d.setDate(startDate.getDate() + i);
-                let y = d.getFullYear();
-                let m = ("0" + (d.getMonth() + 1)).slice(-2);
-                let day = ("0" + d.getDate()).slice(-2);
-                let dateStr = `${y}-${m}-${day}`;
-                let labelStr = `${m}/${day}`;
-                labels.push(labelStr);
-
-                let v = vitals.find(v => v.date === dateStr);
-                if (v && v.amHigh && v.amLow) {
-                    bpAmData.push([v.amLow, v.amHigh]);
-                } else {
-                    bpAmData.push(null);
-                }
-
-                if (v && v.pmHigh && v.pmLow) {
-                    bpPmData.push([v.pmLow, v.pmHigh]);
-                } else {
-                    bpPmData.push(null);
-                }
-
-                if (v && v.weight) {
-                    weightData.push(v.weight);
-                } else {
-                    weightData.push(null);
-                }
-
-                saltData.push(dailySalt[dateStr] || 0);
-            }
-
-            let ctx = document.getElementById("graphCanvas");
-            if (!ctx) {
-                document.getElementById("graph").innerHTML = '<canvas id="graphCanvas"></canvas>';
-                ctx = document.getElementById("graphCanvas");
-            }
-
-            // 統計情報の計算と表示
-            function getStats(arr, isBP = false, highOrLow = 'high') {
-                let valid;
-                if (isBP) {
-                    valid = arr.filter(v => v !== null).map(v => highOrLow === 'high' ? v[1] : v[0]);
-                } else {
-                    valid = arr.filter(v => v !== null && v !== undefined && v !== 0);
-                }
-                if(valid.length === 0) return {min: '-', max: '-', avg: '-'};
-                let min = Math.min(...valid);
-                let max = Math.max(...valid);
-                let avg = valid.reduce((a, b) => a + b, 0) / valid.length;
-                return {min: min.toFixed(1), max: max.toFixed(1), avg: avg.toFixed(1)};
-            }
-            
-            let bpAmHighStats = getStats(bpAmData, true, 'high');
-            let bpAmLowStats = getStats(bpAmData, true, 'low');
-            let bpPmHighStats = getStats(bpPmData, true, 'high');
-            let bpPmLowStats = getStats(bpPmData, true, 'low');
-            let weightStats = getStats(weightData);
-            let saltStats = getStats(saltData);
-
-            let statsHtml = `
-                <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                    <div style="flex: 1 1 45%; min-width: 200px;">
-                        <span style="color:#ffb74d;font-weight:bold;">●塩分(g)</span><br>平均: ${saltStats.avg} / 最大: ${saltStats.max} / 最小: ${saltStats.min}
-                    </div>
-                    <div style="flex: 1 1 45%; min-width: 200px;">
-                        <span style="color:#8e24aa;font-weight:bold;">●体重(kg)</span><br>平均: ${weightStats.avg} / 最大: ${weightStats.max} / 最小: ${weightStats.min}
-                    </div>
-                    <div style="flex: 1 1 45%; min-width: 200px;">
-                        <span style="color:#36a2eb;font-weight:bold;">■朝血圧(mmHg)</span><br>平均: ${bpAmHighStats.avg}/${bpAmLowStats.avg} / 最大: ${bpAmHighStats.max}/${bpAmLowStats.max} / 最小: ${bpAmHighStats.min}/${bpAmLowStats.min}
-                    </div>
-                    <div style="flex: 1 1 45%; min-width: 200px;">
-                        <span style="color:#ff6384;font-weight:bold;">■夕血圧(mmHg)</span><br>平均: ${bpPmHighStats.avg}/${bpPmLowStats.avg} / 最大: ${bpPmHighStats.max}/${bpPmLowStats.max} / 最小: ${bpPmHighStats.min}/${bpPmLowStats.min}
-                    </div>
-                </div>
-            `;
-            let statsDiv = document.getElementById("graphStats");
-            if(statsDiv) statsDiv.innerHTML = statsHtml;
-
-            if (window.myChart) {
-                window.myChart.destroy();
-            }
-
-            window.myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '塩分(g)',
-                            data: saltData,
-                            type: 'line',
-                            borderColor: '#ffb74d',
-                            backgroundColor: '#ffb74d',
-                            yAxisID: 'y-salt',
-                            tension: 0.3,
-                            borderWidth: 3,
-                            pointRadius: 4
-                        },
-                        {
-                            label: '体重(kg)',
-                            data: weightData,
-                            type: 'line',
-                            borderColor: '#8e24aa',
-                            backgroundColor: '#8e24aa',
-                            yAxisID: 'y-weight',
-                            tension: 0.3,
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            borderDash: [5, 5]
-                        },
-                        {
-                            label: '朝血圧',
-                            data: bpAmData,
-                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y-bp',
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.9
-                        },
-                        {
-                            label: '夕血圧',
-                            data: bpPmData,
-                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 1,
-                            yAxisID: 'y-bp',
-                            categoryPercentage: 0.8,
-                            barPercentage: 0.9
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        'y-bp': {
-                            type: 'linear',
-                            position: 'left',
-                            min: 60,
-                            max: 200,
-                            title: { display: true, text: '血圧 (mmHg)' }
-                        },
-                        'y-salt': {
-                            type: 'linear',
-                            position: 'right',
-                            min: 0,
-                            max: 15,
-                            title: { display: true, text: '塩分 (g)' },
-                            grid: { drawOnChartArea: false }
-                        },
-                        'y-weight': {
-                            type: 'linear',
-                            position: 'right',
-                            title: { display: true, text: '体重 (kg)' },
-                            grid: { drawOnChartArea: false }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    if (context.dataset.label === '塩分(g)') {
-                                        return `塩分: ${context.parsed.y}g`;
-                                    } else if (context.dataset.label === '体重(kg)') {
-                                        return `体重: ${context.parsed.y}kg`;
-                                    } else {
-                                        const bp = context.raw;
-                                        if (bp) {
-                                            return `${context.dataset.label}: ${bp[1]} / ${bp[0]}`;
-                                        }
-                                        return context.dataset.label + ': データなし';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // --- [4] データ引継ぎ（エクスポート・インポート） ---
-        function exportData() {
-            let data = {
-                meals: JSON.parse(localStorage.getItem("meals") || "[]"),
-                vitals: JSON.parse(localStorage.getItem("vitals") || "[]"),
-                foodDatabase: JSON.parse(localStorage.getItem("foodDatabase") || "[]"),
-                saltLimit: localStorage.getItem("saltLimit") || "6.0",
-                graphStartDate: localStorage.getItem("graphStartDate") || "",
-                graphEndDate: localStorage.getItem("graphEndDate") || ""
-            };
-            
-            let json = JSON.stringify(data);
-            let blob = new Blob([json], { type: "application/json" });
-            let url = URL.createObjectURL(blob);
-            let a = document.createElement("a");
-            a.href = url;
-            let dateStr = new Date().toISOString().split("T")[0];
-            a.download = `health_data_${dateStr}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function importData() {
-            let fileInput = document.getElementById("importFile");
-            if (fileInput.files.length === 0) {
-                alert("読み込むファイルを選択してください。");
-                return;
-            }
-            
-            let file = fileInput.files[0];
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let data = JSON.parse(e.target.result);
-                    if (data.meals && data.vitals && data.foodDatabase) {
-                        if(confirm("現在のデータはすべて上書きされます。よろしいですか？")) {
-                            localStorage.setItem("meals", JSON.stringify(data.meals));
-                            localStorage.setItem("vitals", JSON.stringify(data.vitals));
-                            localStorage.setItem("foodDatabase", JSON.stringify(data.foodDatabase));
-                            if(data.saltLimit) localStorage.setItem("saltLimit", data.saltLimit);
-                            if(data.graphStartDate) localStorage.setItem("graphStartDate", data.graphStartDate);
-                            if(data.graphEndDate) localStorage.setItem("graphEndDate", data.graphEndDate);
-                            
-                            alert("データを復元しました。画面を更新します。");
-                            location.reload();
-                        }
-                    } else {
-                        alert("対応していないファイル形式です。");
-                    }
-                } catch(err) {
-                    alert("ファイルの読み込みに失敗しました。ファイルが壊れている可能性があります。");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function clearAll() {
-            if (confirm("本当に全データを削除しますか？(食事も血圧も全て消えます)\nこの操作は取り消せません。")) {
-                localStorage.clear();
-                alert("すべてのデータを削除しました。ページを再読み込みします。");
-                location.reload();
-            }
-        }
-
-        function injectTestData() {
-            if (!confirm("現在のデータに加え、ランダムな3週間分のテストデータを追加しますか？")) return;
-
-            let meals = JSON.parse(localStorage.getItem("meals")) || [];
-            let vitals = JSON.parse(localStorage.getItem("vitals")) || [];
-
-            let today = new Date();
-            for (let i = 0; i < 21; i++) {
-                let d = new Date(today);
-                d.setDate(today.getDate() - i);
-                let y = d.getFullYear();
-                let m = ("0" + (d.getMonth() + 1)).slice(-2);
-                let day = ("0" + d.getDate()).slice(-2);
-                let dateStr = `${y}-${m}-${day}`;
-
-                // 重複を避けるために同じ日付のデータは削除
-                meals = meals.filter(x => x.date !== dateStr);
-                vitals = vitals.filter(x => x.date !== dateStr);
-
-                // 食事データの生成 (1日複数回に分割)
-                meals.push({
-                    id: new Date().getTime() + Math.random(),
-                    date: dateStr,
-                    desc: "朝食（テスト）",
-                    salt: Math.round((1 + Math.random() * 2) * 10) / 10
-                });
-                meals.push({
-                    id: new Date().getTime() + Math.random(),
-                    date: dateStr,
-                    desc: "昼食（テスト）",
-                    salt: Math.round((2 + Math.random() * 3) * 10) / 10
-                });
-                if (Math.random() > 0.5) {
-                    meals.push({
-                        id: new Date().getTime() + Math.random(),
-                        date: dateStr,
-                        desc: "夕食（テスト）",
-                        salt: Math.round((2 + Math.random() * 3) * 10) / 10
-                    });
-                }
-
-                // 血圧・体重データの生成
-                vitals.push({
-                    date: dateStr,
-                    amHigh: Math.floor(110 + Math.random() * 30),
-                    amLow: Math.floor(70 + Math.random() * 20),
-                    pmHigh: Math.floor(115 + Math.random() * 25),
-                    pmLow: Math.floor(75 + Math.random() * 15),
-                    weight: Math.round((65 + Math.random() * 3) * 10) / 10
-                });
-            }
-
-            localStorage.setItem("meals", JSON.stringify(meals));
-            localStorage.setItem("vitals", JSON.stringify(vitals));
-
-            alert("3週間分のテストデータを挿入しました！一覧表示すると1日の複数入力も確認できます。");
-            location.reload();
-        }
-
-        window.onload = function () {
-            initSaltLimitOptions();
-            updateFoodDatalist();
-            initGraphDates();
-            drawSaltMeter();
-            drawGraph();
-        };
-    </script>
 </body>
-
 </html>
