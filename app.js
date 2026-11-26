@@ -1,0 +1,2526 @@
+// ==========================================
+// ツーリング記録スタジオ (Touring Diary Studio)
+// アプリケーション ロジック (app.js)
+// ==========================================
+
+// 初期データ（2026年11月11日 ツーリング記録）
+const DEFAULT_TRACK = [
+  [33.7949229,132.8757386],[33.7949229,132.8757386],[33.7940056,132.8749262],[33.7913917,132.8655472],[33.7912822,132.8621187],
+  [33.7909781,132.8545954],[33.789632,132.8473702],[33.789632,132.8473702],[33.7912752,132.8313925],[33.7892757,132.8238259],
+  [33.790346,132.835692],[33.7894052,132.8389454],[33.7916692,132.8532729],[33.791504,132.8644773],[33.7926983,132.8701339],
+  [33.7926983,132.8701339],[33.7949267,132.8757703],[33.7949267,132.8757703],[33.7943841,132.8752666],[33.7906698,132.8551672],
+  [33.790687,132.8286199],[33.7892206,132.8237689],[33.7829304,132.8037202],[33.7820781,132.7927811],[33.7848126,132.7846497],
+  [33.7894251,132.7728944],[33.7894251,132.7728944],[33.7830759,132.7621412],[33.7752679,132.7495069],[33.7752679,132.7495069],
+  [33.7696493,132.7086735],[33.7696493,132.7086735],[33.7696438,132.7086736],[33.7583584,132.7081574],[33.7583584,132.7081574],
+  [33.748749,132.7028724],[33.7096532,132.6655879],[33.6539977,132.5863396],[33.654824,132.588852],[33.654824,132.588852],
+  [33.6513565,132.5769768],[33.6513565,132.5769768],[33.6857172,132.6343926],[33.6170096,132.489254],[33.6170096,132.489254],
+  [33.6055716,132.4863127],[33.594452,132.498076],[33.6047414,132.4845782],[33.5425948,132.569189],[33.5348365,132.5804549],
+  [33.5352607,132.6101506],[33.5352607,132.6101506],[33.5496085,132.6470596],[33.5496085,132.6470596],[33.5542995,132.6480953],
+  [33.554525,132.6485314],[33.5520765,132.6487437],[33.5487949,132.6487029],[33.5487949,132.6487029],[33.5483283,132.649895],
+  [33.54891,132.6507733],[33.5531418,132.6545799],[33.5520657,132.6554912],[33.5522112,132.6554905],[33.5668118,132.6644248],
+  [33.5798914,132.6662584],[33.6143356,132.6885136],[33.6340712,132.7073731],[33.706463,132.7086798],[33.7390923,132.6982567],
+  [33.7554609,132.7077698],[33.7695713,132.7078043],[33.7695713,132.7078043],[33.7710552,132.7153159],[33.7716625,132.7275074],
+  [33.7753866,132.7490282],[33.7821384,132.7605824],[33.7896219,132.769791],[33.7878093,132.7813777],[33.7878093,132.7813777],
+  [33.784477,132.7852151],[33.7836579,132.785221],[33.7815514,132.8133718],[33.7815514,132.8133718],[33.7787878,132.8312993],
+  [33.7822183,132.8766125],[33.7947903,132.8754943],[33.7947903,132.8754943]
+];
+
+const DEFAULT_POINTS = [
+  {"name":"東温市周辺（出発地点）","lat":33.7949229,"lon":132.8757386,"time":"09:50","desc":"タイムラインの出発地点","memo":"天候にも恵まれ、東温市からスタート。爽やかな朝の空気の中を出発。","photos":[],"videos":[]},
+  {"name":"松山市南部（午前の折り返し地点）","lat":33.7892201,"lon":132.8238155,"time":"10:01","desc":"検索住所として記録された地点。数分滞在後、東温市方面へ戻る","memo":"午前中の折り返し。空気も澄んでいて快適な走り出し。","photos":[],"videos":[]},
+  {"name":"JR下灘駅（伊予市双海町大久保）","lat":33.6551644,"lon":132.5893398,"time":"12:10–12:15","desc":"JSONの滞在地点。座標がJR下灘駅の位置と一致","memo":"目の前に広がる青い瀬戸内海とホームの佇まいが格別。穏やかな潮風を感じながらベンチでひと息。","photos":[],"videos":[]},
+  {"name":"内子町内子周辺（午後の滞在地点）","lat":33.5544106,"lon":132.648575,"time":"12:56–14:40","desc":"JSONの滞在地点。約1時間44分滞在。施設名までは座標だけで断定しない","memo":"白壁と木造の伝統的な町並みをゆっくりと散策。情緒あふれる風景に心が癒やされる。","photos":[],"videos":[]},
+  {"name":"内子町内子周辺（帰路の経由地点）","lat":33.5523129,"lon":132.6554783,"time":"15:48–15:59","desc":"JSONの滞在地点。内子町内子周辺","memo":"帰路のルートを確認し、水分補給をして再出発。","photos":[],"videos":[]},
+  {"name":"東温市周辺（帰着地点）","lat":33.7947903,"lon":132.8754943,"time":"17:10","desc":"タイムラインの帰着地点","memo":"夕暮れ時に無事帰着。走行距離約136.7km、下灘の海と内子の町並みを存分に楽しめた充実のツーリング。","photos":[],"videos":[]},
+  {"name":"ドラレコ動画のGPS位置（13秒地点）","lat":33.5736111,"lon":132.534925,"time":"動画 00:13","desc":"動画内のGPS座標。動画内の経過秒数のみで撮影時刻は未確定のため、時系列の末尾に表示","memo":"ドラレコ映像のポイント。カーブの続く爽快な快走路。","photos":[],"videos":[],"videoClip":true,"videoStartSec":13,"videoEndSec":20,"videoName":"とりてつ_13-20秒.mp4"}
+];
+
+// アプリデータ
+let appData = {
+  title: "新しいツーリング記録",
+  subtitle: "データを取り込むと、ここに記録が表示されます",
+  stats: {
+    start: "",
+    end: "",
+    distance: "",
+    area: ""
+  },
+  overview: "まだデータがありません。「データを取り込む」から、タイムラインJSONやドラレコのNMEAファイルを取り込んでください。",
+  overviewNote: "",
+  track: [],
+  trackTimes: [],
+  points: []
+};
+
+const STORAGE_KEY = 'touring_diary_studio_appData_v2';
+let currentIndex = 0;
+let map = null;
+let trackLine = null;
+let trackDotsLayer = null;
+let markers = [];
+const videoBlobUrls = {}; // videoKey -> blobUrl
+let clipStopTimer = null;
+
+// ==========================================
+// IndexedDB 動画永続化ストレージ (VideoDB)
+// ==========================================
+const VideoDB = {
+  dbName: 'TouringDiaryDB_v2',
+  storeName: 'media_videos',
+  db: null,
+
+  async open() {
+    if (this.db) return this.db;
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.dbName, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          db.createObjectStore(this.storeName, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = (e) => {
+        this.db = e.target.result;
+        resolve(this.db);
+      };
+      req.onerror = (e) => reject(e);
+    });
+  },
+
+  async saveVideo(id, file) {
+    try {
+      const db = await this.open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        const data = {
+          id: id,
+          name: file.name,
+          type: file.type || 'video/mp4',
+          blob: file,
+          size: file.size,
+          updatedAt: Date.now()
+        };
+        const req = store.put(data);
+        req.onsuccess = () => resolve(data);
+        req.onerror = (e) => reject(e);
+      });
+    } catch (e) {
+      console.warn('VideoDB save error:', e);
+      return null;
+    }
+  },
+
+  async getVideo(id) {
+    try {
+      const db = await this.open();
+      return new Promise((resolve) => {
+        const tx = db.transaction(this.storeName, 'readonly');
+        const store = tx.objectStore(this.storeName);
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async deleteVideo(id) {
+    try {
+      const db = await this.open();
+      return new Promise((resolve) => {
+        const tx = db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => resolve();
+      });
+    } catch (e) {}
+  }
+};
+
+// ==========================================
+// ローカルストレージ復元と基本初期化
+// ==========================================
+function loadSavedData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.points && parsed.track && parsed.points.length > 0) {
+        appData = parsed;
+        if (!Array.isArray(appData.trackTimes)) appData.trackTimes = [];
+      }
+    }
+  } catch (e) {
+    console.warn("ローカルストレージの復元に失敗しました:", e);
+  }
+}
+
+// blob: URL はセッション限りの仮URL（閉じると失効）なので、保存・書き出しから除外する
+function stripBlobUrls(key, value) {
+  if (key === 'url' && typeof value === 'string' && value.indexOf('blob:') === 0) return '';
+  return value;
+}
+
+function saveDataToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData, stripBlobUrls));
+  } catch (e) {
+    console.warn("ローカルストレージ保存に失敗:", e);
+  }
+}
+
+// ==========================================
+// 時系列管理：時刻が分かる地点だけを実時刻で並べ、動画内秒数は時計時刻として扱わない
+// ==========================================
+function localClockSeconds(timestamp) {
+  if (!Number.isFinite(timestamp)) return null;
+  const d = new Date(timestamp + 9 * 60 * 60 * 1000);
+  return d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds();
+}
+
+function parseClockValue(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const s = value.trim();
+
+  // ISO日時・日時文字列は端末のローカル時刻へ変換して比較する。
+  const iso = Date.parse(s);
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}[T ]/.test(s) && Number.isFinite(iso)) return localClockSeconds(iso);
+
+  // 時刻範囲の先頭だけを採用。先頭に「動画」等がある相対秒表示は対象外。
+  const m = s.match(/^\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  const h = Number(m[1]), min = Number(m[2]), sec = Number(m[3] || 0);
+  if (h > 23 || min > 59 || sec > 59) return null;
+  return h * 3600 + min * 60 + sec;
+}
+
+function pointSortValue(point) {
+  if (Number.isFinite(point && point.timestampStart)) return localClockSeconds(point.timestampStart);
+  if (point && point.startTimestamp) {
+    const n = Date.parse(point.startTimestamp);
+    if (Number.isFinite(n)) return localClockSeconds(n);
+  }
+  const parsed = parseClockValue(point && point.time);
+  return parsed === null ? null : parsed;
+}
+
+function sortPointsChronologically() {
+  if (!Array.isArray(appData.points)) return;
+  appData.points = appData.points
+    .map((point, index) => ({ point, index, value: pointSortValue(point) }))
+    .sort((a, b) => {
+      if (a.value === null && b.value === null) return a.index - b.index;
+      if (a.value === null) return 1;
+      if (b.value === null) return -1;
+      return a.value - b.value || a.index - b.index;
+    })
+    .map(item => item.point);
+}
+
+function formatClockFromValue(value) {
+  if (value === null || value === undefined) return '';
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds)) return '';
+  const h = Math.floor(seconds / 3600) % 24;
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function pointEndSortValue(point) {
+  if (Number.isFinite(point && point.timestampEnd)) return localClockSeconds(point.timestampEnd);
+  if (point && point.endTimestamp) {
+    const n = Date.parse(point.endTimestamp);
+    if (Number.isFinite(n)) return localClockSeconds(n);
+  }
+  const time = point && point.time;
+  if (typeof time === 'string') {
+    const range = time.match(/^\s*\d{1,2}:\d{2}(?::\d{2})?\s*[–—-]\s*(\d{1,2}:\d{2}(?::\d{2})?)/);
+    if (range) return parseClockValue(range[1]);
+  }
+  return pointSortValue(point);
+}
+
+function refreshHeaderTimesFromPoints(fromReplace) {
+  const points = appData.points || [];
+  const starts = points.map(pointSortValue).filter(v => v !== null);
+  const ends = points.map(pointEndSortValue).filter(v => v !== null);
+  // 軌跡の時刻（最初＝開始、最後＝帰着）も候補に入れる
+  const tArr = Array.isArray(appData.trackTimes) ? appData.trackTimes : [];
+  const ftv = parseClockValue(tArr.find(t => t));
+  if (ftv !== null) starts.push(ftv);
+  const ltv = parseClockValue(tArr.slice().reverse().find(t => t));
+  if (ltv !== null) ends.push(ltv);
+  if (!starts.length && !ends.length) return;
+
+  // 置き換え取り込み時は、前の記録の時刻を混ぜない
+  if (!fromReplace) {
+    const currentStart = parseClockValue(appData.stats && appData.stats.start);
+    const currentEnd = parseClockValue(appData.stats && appData.stats.end);
+    if (currentStart !== null) starts.push(currentStart);
+    if (currentEnd !== null) ends.push(currentEnd);
+  }
+
+  if (starts.length) appData.stats.start = formatClockFromValue(Math.min(...starts));
+  if (ends.length) appData.stats.end = formatClockFromValue(Math.max(...ends));
+}
+
+function updateHeaderDisplay() {
+  document.getElementById('appTitleDisplay').textContent = appData.title;
+  document.getElementById('appSubtitleDisplay').textContent = appData.subtitle;
+  document.title = appData.title + " - ツーリング記録スタジオ";
+
+  document.getElementById('statStart').textContent = appData.stats.start;
+  document.getElementById('statEnd').textContent = appData.stats.end;
+  document.getElementById('statDistance').textContent = appData.stats.distance;
+  document.getElementById('statArea').textContent = appData.stats.area;
+
+  const overviewBox = document.getElementById('overviewText');
+  overviewBox.innerHTML = appData.overview.split('\n\n').map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('');
+  document.getElementById('overviewNote').textContent = appData.overviewNote;
+
+  document.getElementById('dataStatusText').textContent = 
+    `データ状態: 地点 ${appData.points.length}件, 軌跡 ${appData.track.length}点`;
+}
+
+// ==========================================
+// 地図初期化
+// ==========================================
+function initMap() {
+  if (!window.L) {
+    document.getElementById('mapStatus').textContent = '地図ライブラリを読み込めません。ネット接続を確認してください。';
+    return;
+  }
+
+  if (map) {
+    map.remove();
+    map = null;
+    trackLine = null;
+    markers = [];
+  }
+
+  let centerLat = 33.66, centerLon = 132.68;
+  if (appData.points.length > 0) {
+    centerLat = appData.points[0].lat;
+    centerLon = appData.points[0].lon;
+  }
+
+  map = L.map('map', { preferCanvas: true }).setView([centerLat, centerLon], 10);
+
+  const gsi = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '地図：国土地理院'
+  });
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  });
+
+  let switched = false;
+  gsi.on('tileerror', () => {
+    if (!switched) {
+      switched = true;
+      map.removeLayer(gsi);
+      osm.addTo(map);
+      document.getElementById('mapStatus').textContent = '国土地理院地図が取得できないため、OpenStreetMapへ切り替えました。';
+    }
+  });
+  gsi.addTo(map);
+  document.getElementById('mapStatus').textContent = '地図を表示しています（地点ピンをクリックすると、選択固定されてメモ・写真・動画が表示されます）。オレンジ色の丸に触れると、その地点の時刻と座標が出ます。';
+
+  drawTrackOverlays();
+
+  renderMarkers();
+
+  if (trackLine && appData.track.length > 0) {
+    try {
+      map.fitBounds(trackLine.getBounds(), { padding: [30, 30] });
+    } catch (e) {}
+  }
+}
+
+// 軌跡ラインと時刻ドットの描画（initMapと、ピンのドラッグ移動時で共用）
+function drawTrackOverlays() {
+  if (!map || !window.L) return;
+  if (trackLine) { map.removeLayer(trackLine); trackLine = null; }
+  if (trackDotsLayer) { map.removeLayer(trackDotsLayer); trackDotsLayer = null; }
+
+  if (appData.track && appData.track.length > 0) {
+    trackLine = L.polyline(appData.track, {
+      color: '#0879b9',
+      weight: 5,
+      opacity: 0.88,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(map);
+  }
+
+  // 軌跡の時刻ドット（触れる／クリックで時刻と座標を表示）
+  if (appData.track && appData.track.length > 0 && Array.isArray(appData.trackTimes)) {
+    const n = appData.track.length;
+    const stride = n > 400 ? Math.ceil(n / 400) : 1;
+    const layer = L.layerGroup();
+    let dotCount = 0;
+    const addDot = (i) => {
+      const t = appData.trackTimes[i];
+      if (!t) return;
+      const lat = appData.track[i][0], lon = appData.track[i][1];
+      const label = `🕒 ${t}<br>📍 ${Number(lat).toFixed(5)}, ${Number(lon).toFixed(5)}`;
+      const dot = L.circleMarker([lat, lon], { radius: 5, color: '#ffffff', weight: 1.5, fillColor: '#e8710a', fillOpacity: 0.95 });
+      dot.bindTooltip(label, { direction: 'top' });
+      dot.bindPopup(`<div class="popup-box"><div class="popup-time">${label}</div><button class="btn btn-accent btn-sm popup-btn" style="margin-top:6px; background:#0b7a8b; color:#fff;" onclick="registerPointFromTrack(${i})">＋ この地点を登録する</button></div>`);
+      layer.addLayer(dot);
+      dotCount++;
+    };
+    for (let i = 0; i < n; i += stride) addDot(i);
+    if (n > 1 && (n - 1) % stride !== 0) addDot(n - 1);
+    if (dotCount > 0) {
+      trackDotsLayer = layer;
+      trackDotsLayer.addTo(map);
+    }
+  }
+}
+
+// 地点ピンを動かしたとき、一番近い軌跡点（100m以内）も一緒に動かして青い線を追従させる
+function moveNearestTrackPoint(oldLat, oldLon, newLat, newLon) {
+  if (!appData.track || appData.track.length === 0) return;
+  let best = -1, bestD = Infinity;
+  appData.track.forEach((pt, i) => {
+    const d = calcDistance(oldLat, oldLon, pt[0], pt[1]);
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  if (best >= 0 && bestD <= 100) {
+    appData.track[best] = [newLat, newLon];
+    drawTrackOverlays();
+  }
+}
+
+// マーカー再描画（地図ピンのポップアップにメモ、写真、動画再生ボタンを表示）
+function renderMarkers() {
+  if (!map || !window.L) return;
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  appData.points.forEach((p, i) => {
+    const marker = L.marker([p.lat, p.lon], { draggable: true }).addTo(map);
+
+    // ピンをドラッグして地点を移動（座標入力なしで位置修正できる）
+    marker.on('dragend', () => {
+      const ll = marker.getLatLng();
+      const oldLat = p.lat, oldLon = p.lon;
+      p.lat = Math.round(ll.lat * 10000000) / 10000000;
+      p.lon = Math.round(ll.lng * 10000000) / 10000000;
+      moveNearestTrackPoint(oldLat, oldLon, p.lat, p.lon);
+      saveDataToStorage();
+      renderPointList();
+      if (i === currentIndex) {
+        const ci = document.getElementById('inputPointCoords');
+        if (ci) ci.value = p.lat + ', ' + p.lon;
+      }
+      marker.setPopupContent(buildPopupContent(p, i));
+      showToast('地点を移動しました');
+    });
+    
+    const tooltipText = p.name + (p.memo ? ' : ' + p.memo.slice(0, 25) + '…' : '');
+    marker.bindTooltip(tooltipText, { direction: 'top' });
+
+    const popupHtml = buildPopupContent(p, i);
+    marker.bindPopup(popupHtml, { maxWidth: 310 });
+
+    // 【重要②】地図のピンクリックでその地点を選択固定！
+    marker.on('click', () => {
+      selectPoint(i, false);
+    });
+
+    markers.push(marker);
+  });
+}
+
+function buildPopupContent(p, i) {
+  let photoThumbsHtml = '';
+  if (p.photos && p.photos.length > 0) {
+    photoThumbsHtml = '<div class="popup-photos">' + 
+      p.photos.slice(0, 4).map((src, pIdx) => 
+        `<img src="${src}" class="popup-photo-thumb" onclick="openLightboxFromPoint(${i}, ${pIdx})" title="クリックで拡大">`
+      ).join('') + 
+      (p.photos.length > 4 ? `<span style="font-size:0.75rem; color:#666; align-self:center;">+${p.photos.length - 4}枚</span>` : '') +
+      '</div>';
+  }
+
+  let memoHtml = '';
+  if (p.memo && p.memo.trim() !== '') {
+    memoHtml = `<div class="popup-memo"><strong>📝 感想・メモ:</strong><br>${escapeHtml(p.memo)}</div>`;
+  }
+
+  const hasVideo = (p.videos && p.videos.length > 0) || p.videoClip;
+  let videoBtnHtml = '';
+  if (hasVideo) {
+    videoBtnHtml = `<button class="btn btn-accent btn-sm popup-btn" style="margin-top:6px; background:#0b7a8b; color:#fff;" onclick="selectPointAndPlay(${i})">▶ この地点の動画を再生</button>`;
+  }
+
+  return `
+    <div class="popup-box">
+      <div class="popup-title">${escapeHtml(p.name)}</div>
+      <div class="popup-time">🕒 ${escapeHtml(p.time || '')}</div>
+      ${p.desc ? `<div class="popup-desc">${escapeHtml(p.desc)}</div>` : ''}
+      ${memoHtml}
+      ${photoThumbsHtml}
+      ${videoBtnHtml}
+      <button class="btn btn-outline btn-sm popup-btn" onclick="editPointInPopup(${i})">✏️ 地図で編集する</button>
+    </div>
+  `;
+}
+
+// 地図ポップアップ内での地点編集（地図を見ながらその場で編集する）
+window.editPointInPopup = function(i) {
+  const p = appData.points[i];
+  if (!p || !markers[i]) return;
+  selectPoint(i, false);
+  const html = `
+    <div class="popup-box">
+      <div class="popup-title">✏️ 地点を編集</div>
+      <label class="popup-label">地点名</label>
+      <input id="popEditName" class="popup-input" type="text" value="${escapeHtml(p.name || '')}">
+      <label class="popup-label">時刻</label>
+      <input id="popEditTime" class="popup-input" type="text" value="${escapeHtml(p.time || '')}" placeholder="16:54">
+      <label class="popup-label">説明</label>
+      <input id="popEditDesc" class="popup-input" type="text" value="${escapeHtml(p.desc || '')}">
+      <label class="popup-label">感想・メモ</label>
+      <textarea id="popEditMemo" class="popup-input" rows="3">${escapeHtml(p.memo || '')}</textarea>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-accent btn-sm popup-btn" style="flex:1;" onclick="savePointFromPopup(${i})">💾 保存</button>
+        <button class="btn btn-outline btn-sm popup-btn" style="flex:1;" onclick="cancelPopupEdit(${i})">キャンセル</button>
+      </div>
+      <div style="font-size:0.72rem; color:#666; margin-top:6px;">位置の修正はピンをドラッグでできます</div>
+    </div>`;
+  markers[i].setPopupContent(html);
+  markers[i].openPopup();
+};
+
+window.cancelPopupEdit = function(i) {
+  const p = appData.points[i];
+  if (!p || !markers[i]) return;
+  markers[i].setPopupContent(buildPopupContent(p, i));
+  markers[i].openPopup();
+};
+
+window.savePointFromPopup = function(i) {
+  const p = appData.points[i];
+  if (!p) return;
+  const nameEl = document.getElementById('popEditName');
+  if (!nameEl) return;
+  p.name = nameEl.value.trim() || '名称未設定';
+  p.time = document.getElementById('popEditTime').value.trim();
+  p.desc = document.getElementById('popEditDesc').value.trim();
+  p.memo = document.getElementById('popEditMemo').value.trim();
+
+  const editedPoint = p;
+  sortPointsChronologically();
+  refreshHeaderTimesFromPoints();
+  const newIdx = appData.points.indexOf(editedPoint);
+  saveDataToStorage();
+  updateHeaderDisplay();
+  renderPointList();
+  renderMarkers();
+  selectPoint(newIdx, false);
+  if (markers[newIdx]) {
+    markers[newIdx].setPopupContent(buildPopupContent(editedPoint, newIdx));
+    markers[newIdx].openPopup();
+  }
+  showToast('地点を保存しました');
+};
+
+// ポップアップからの直接動画再生
+window.selectPointAndPlay = function(idx) {
+  selectPoint(idx, true);
+  setTimeout(() => {
+    playClip();
+  }, 200);
+};
+
+// 軌跡ドットから登録地点を作る（感想・写真・動画を付けられるように）
+window.registerPointFromTrack = function(i) {
+  if (!appData.track || !appData.track[i]) return;
+  const lat = appData.track[i][0], lon = appData.track[i][1];
+  const t = (Array.isArray(appData.trackTimes) && appData.trackTimes[i]) ? appData.trackTimes[i] : "";
+  const dup = appData.points.some(p => Math.abs(p.lat - lat) < 0.00005 && Math.abs(p.lon - lon) < 0.00005);
+  if (dup) { showToast('その付近の地点はもう登録されています'); return; }
+  appData.points.push({
+    name: t ? `${t} の地点` : "軌跡の地点",
+    lat: lat,
+    lon: lon,
+    time: t,
+    desc: "軌跡ドットから登録",
+    memo: "",
+    photos: [],
+    videos: []
+  });
+  sortPointsChronologically();
+  refreshHeaderTimesFromPoints();
+  saveDataToStorage();
+  renderPointList();
+  renderMarkers();
+  const idx = appData.points.findIndex(p => p.lat === lat && p.lon === lon);
+  if (idx >= 0) selectPoint(idx, true);
+  showToast('地点を登録しました。感想や写真を追加できます');
+};
+
+// ==========================================
+// 地点選択固定と一覧・編集パネルの完全連動
+// ==========================================
+function renderPointList() {
+  const container = document.getElementById('pointCardList');
+  container.innerHTML = '';
+
+  appData.points.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'point-card' + (i === currentIndex ? ' active' : '');
+    card.onclick = () => selectPoint(i, true);
+
+    const hasMemo = p.memo && p.memo.trim() !== '';
+    const photoCount = p.photos ? p.photos.length : 0;
+    const videoCount = (p.videos ? p.videos.length : 0) + (p.videoClip ? 1 : 0);
+
+    card.innerHTML = `
+      <div class="point-header">
+        <span class="point-title">${i + 1}. ${escapeHtml(p.name)}</span>
+        <span class="point-time">${escapeHtml(p.time || '')}</span>
+      </div>
+      <div class="point-desc">${escapeHtml(p.desc || '')}</div>
+      <div class="point-badges">
+        ${hasMemo ? '<span class="badge badge-memo">📝 メモあり</span>' : ''}
+        ${photoCount > 0 ? `<span class="badge badge-photo">📷 写真 ${photoCount}枚</span>` : ''}
+        ${videoCount > 0 ? `<span class="badge badge-video">🎥 動画 ${videoCount}件</span>` : ''}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// 【重要②】地点を選択固定する関数（地図ピン・一覧リスト共通）
+function selectPoint(idx, zoomMap = false) {
+  if (idx < 0 || idx >= appData.points.length) return;
+  currentIndex = idx;
+  const p = appData.points[idx];
+
+  // 1. 左側リストのアクティブ枠更新
+  const cards = document.querySelectorAll('.point-card');
+  cards.forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+
+  // 2. 右側地点編集フォームに完全反映
+  document.getElementById('currentPointTitle').textContent = `地点 ${idx + 1}: ${p.name}`;
+  document.getElementById('inputPointName').value = p.name || '';
+  document.getElementById('inputPointTime').value = p.time || '';
+  document.getElementById('inputPointCoords').value = `${p.lat}, ${p.lon}`;
+  document.getElementById('inputPointDesc').value = p.desc || '';
+  document.getElementById('inputPointMemo').value = p.memo || '';
+  document.getElementById('pointSaveStatus').textContent = '';
+
+  document.getElementById('inputVideoStartSec').value = p.videoStartSec !== undefined ? p.videoStartSec : ((p.videoClip) ? 13 : 0);
+  document.getElementById('inputVideoEndSec').value = p.videoEndSec !== undefined ? p.videoEndSec : ((p.videoClip) ? 20 : 0);
+
+  // 3. 写真・通常動画メディア一覧の描画（ご要望③）
+  renderMediaInEditor(p);
+
+  // 4. 地図ピンとポップアップの同期
+  if (zoomMap && map && markers[idx]) {
+    map.setView([p.lat, p.lon], Math.max(map.getZoom(), 13));
+    markers[idx].openPopup();
+  }
+
+  // 5. 【重要②】メイン動画パネルに選択固定中の地点名と動画をセット
+  updateVideoSection(idx);
+}
+
+// ==========================================
+// 【要件③】写真・普通の動画を画像同様に取り込むメディアグリッド
+// ==========================================
+function renderMediaInEditor(p) {
+  const grid = document.getElementById('pointMediaGrid');
+  grid.innerHTML = '';
+
+  const photos = p.photos || [];
+  const videos = p.videos || [];
+
+  // 写真カードの描画
+  photos.forEach((src, pIdx) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '添付写真';
+    img.title = 'クリックで拡大';
+    img.onclick = () => openLightboxFromPoint(currentIndex, pIdx);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'photo-delete-btn';
+    delBtn.textContent = '写真を削除';
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      photos.splice(pIdx, 1);
+      renderMediaInEditor(p);
+      renderMarkers();
+      saveDataToStorage();
+      showToast('写真を削除しました');
+    };
+
+    card.append(img, delBtn);
+    grid.appendChild(card);
+  });
+
+  // 普通の動画カードの描画（ご要望③：画像同様に取り込み）
+  videos.forEach((vItem, vIdx) => {
+    const card = document.createElement('div');
+    card.className = 'media-card-video';
+
+    card.innerHTML = `
+      <div>
+        <div class="media-video-icon">🎥</div>
+        <div class="media-video-name" title="${escapeHtml(vItem.name)}">${escapeHtml(vItem.name)}</div>
+      </div>
+      <div>
+        <button class="btn btn-accent btn-sm" style="width:100%; font-size:0.78rem; padding:4px 6px; margin-bottom:4px;" onclick="playSelectedPointVideo(${currentIndex}, ${vIdx})">▶ 再生</button>
+        <button class="photo-delete-btn" style="margin:0;" onclick="deletePointVideoItem(${currentIndex}, ${vIdx})">動画を削除</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // プリセットのドラレコ動画（とりてつ_13-20秒.mp4など）がある場合の表示
+  if (p.videoClip && videos.length === 0) {
+    const card = document.createElement('div');
+    card.className = 'media-card-video';
+    const vName = p.videoName || 'ドラレコ動画 (とりてつ_13-20秒.mp4)';
+    card.innerHTML = `
+      <div>
+        <div class="media-video-icon">🎥</div>
+        <div class="media-video-name" title="${escapeHtml(vName)}">${escapeHtml(vName)}</div>
+      </div>
+      <div>
+        <button class="btn btn-accent btn-sm" style="width:100%; font-size:0.78rem; padding:4px 6px; margin-bottom:4px;" onclick="playClip()">▶ 再生</button>
+        <button class="photo-delete-btn" style="margin:0;" onclick="removePresetVideoClip(${currentIndex})">解除</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+// 普通の動画の再生
+window.playSelectedPointVideo = async function(pIdx, vIdx) {
+  const p = appData.points[pIdx];
+  if (!p || !p.videos || !p.videos[vIdx]) return;
+  const vItem = p.videos[vIdx];
+
+  // 保存済みの blob: URL は失効している可能性があるため、IndexedDB から引き直す
+  let url = null;
+  const saved = await VideoDB.getVideo(vItem.id);
+  if (saved && saved.blob) {
+    url = URL.createObjectURL(saved.blob);
+    vItem.url = url;
+  }
+  if (!url && vItem.url && vItem.url.indexOf('blob:') !== 0) url = vItem.url;
+
+  if (url) {
+    video.src = url;
+    video.currentTime = p.videoStartSec || 0;
+    await video.play();
+    document.getElementById('videoStatus').textContent = `動画再生中: ${vItem.name}`;
+    document.getElementById('clip').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+};
+
+window.deletePointVideoItem = async function(pIdx, vIdx) {
+  const p = appData.points[pIdx];
+  if (!p || !p.videos || !p.videos[vIdx]) return;
+  const vItem = p.videos[vIdx];
+
+  await VideoDB.deleteVideo(vItem.id);
+  p.videos.splice(vIdx, 1);
+  if (p.videos.length === 0) p.videoClip = false;
+
+  saveDataToStorage();
+  renderMediaInEditor(p);
+  renderPointList();
+  updateVideoSection(pIdx);
+  showToast('動画を削除しました');
+};
+
+window.removePresetVideoClip = function(pIdx) {
+  const p = appData.points[pIdx];
+  if (!p) return;
+  p.videoClip = false;
+  saveDataToStorage();
+  renderMediaInEditor(p);
+  renderPointList();
+  updateVideoSection(pIdx);
+  showToast('動画設定を解除しました');
+};
+
+// ==========================================
+// 【要件②】動画再生パネルの単純化と同期
+// ==========================================
+const video = document.getElementById('clip');
+const videoStatus = document.getElementById('videoStatus');
+const playClipBtn = document.getElementById('playClipBtn');
+const videoNotice = document.getElementById('videoPointNotice');
+const selectedPointNameDisplay = document.getElementById('selectedPointNameDisplay');
+const dropZoneTargetTitle = document.getElementById('dropZoneTargetTitle');
+const videoLoadedIndicator = document.getElementById('videoLoadedIndicator');
+let videoSectionRequestId = 0;
+
+async function getVideoSourceForPoint(idx) {
+  const p = appData.points[idx];
+  if (!p) return null;
+
+  // 1. 地点の videos 配列内の最新動画
+  if (p.videos && p.videos.length > 0) {
+    const v = p.videos[p.videos.length - 1];
+    // 保存済みの blob: URL はセッション限りで失効するため、必ず IndexedDB から引き直す
+    const saved = await VideoDB.getVideo(v.id);
+    if (saved && saved.blob) {
+      const url = URL.createObjectURL(saved.blob);
+      v.url = url;
+      return { url: url, name: v.name, source: 'indexedDB' };
+    }
+    if (v.url && v.url.indexOf('blob:') !== 0) return { url: v.url, name: v.name, source: 'url' };
+  }
+
+  // 2. 単一動画キャッシュ
+  if (videoBlobUrls[idx]) {
+    return { url: videoBlobUrls[idx], name: p.videoName || '取り込み動画', source: 'blob' };
+  }
+  const saved = await VideoDB.getVideo('point_' + idx);
+  if (saved && saved.blob) {
+    const url = URL.createObjectURL(saved.blob);
+    videoBlobUrls[idx] = url;
+    return { url: url, name: saved.name, source: 'indexedDB' };
+  }
+
+  // 3. プリセット動画（とりてつ_13-20秒.mp4など）
+  if (p.videoClip) {
+    return { url: './とりてつ_13-20秒.mp4', name: p.videoName || 'とりてつ_13-20秒.mp4', source: 'default' };
+  }
+  return null;
+}
+
+async function updateVideoSection(idx) {
+  const requestId = ++videoSectionRequestId;
+  const p = appData.points[idx];
+  if (!p) return;
+
+  selectedPointNameDisplay.textContent = `${idx + 1}. ${p.name}`;
+  dropZoneTargetTitle.textContent = `「${p.name}」に動画を追加`;
+
+  const videoInfo = await getVideoSourceForPoint(idx);
+  if (requestId !== videoSectionRequestId || idx !== currentIndex) return;
+
+  if (videoInfo) {
+    playClipBtn.disabled = false;
+    videoNotice.textContent = `地点「${p.name}」が選択固定中（動画再生可能）`;
+    videoStatus.textContent = `動画: ${videoInfo.name}（「再生」ボタンを押すと再生します）`;
+    videoLoadedIndicator.innerHTML = `<span class="video-loaded-tag">✓ 動画セット完了: ${escapeHtml(videoInfo.name)}</span>`;
+
+    if (video.src !== videoInfo.url) {
+      video.src = videoInfo.url;
+      video.load();
+    }
+  } else {
+    playClipBtn.disabled = true;
+    videoNotice.textContent = `地点「${p.name}」が選択固定中`;
+    videoStatus.textContent = 'この地点にはまだ動画がありません。下の枠にドラッグ＆ドロップすると動画を追加できます。';
+    videoLoadedIndicator.innerHTML = '';
+  }
+}
+
+async function playClip() {
+  const p = appData.points[currentIndex];
+  const videoInfo = await getVideoSourceForPoint(currentIndex);
+  if (!videoInfo) {
+    videoStatus.textContent = 'この地点に動画がありません。動画をドロップして追加してください。';
+    return;
+  }
+
+  try {
+    if (video.src !== videoInfo.url) {
+      video.src = videoInfo.url;
+      video.load();
+    }
+    const startSec = (p && p.videoStartSec !== undefined) ? p.videoStartSec : ((p && p.videoClip) ? 13 : 0);
+    const endSec = (p && p.videoEndSec !== undefined) ? p.videoEndSec : ((p && p.videoClip) ? 20 : 0);
+
+    video.currentTime = startSec;
+    await video.play();
+    videoStatus.textContent = `動画を再生中です (${startSec}秒 〜 ${endSec > 0 ? endSec + '秒' : '終了まで'})`;
+
+    if (clipStopTimer) clearInterval(clipStopTimer);
+    if (endSec > startSec) {
+      clipStopTimer = setInterval(() => {
+        if (video.currentTime >= endSec || video.paused) {
+          clearInterval(clipStopTimer);
+          if (video.currentTime >= endSec) {
+            video.pause();
+            videoStatus.textContent = `指定区間 (${startSec}〜${endSec}秒) の再生が完了しました。`;
+          }
+        }
+      }, 100);
+    }
+  } catch (err) {
+    videoStatus.textContent = '動画の再生に失敗しました: ' + (err && err.message ? err.message : 'ファイル形式をご確認ください。');
+  }
+}
+playClipBtn.addEventListener('click', playClip);
+
+// ==========================================
+// 動画の自動取り込み（ドラッグ＆ドロップ・選択）
+// ==========================================
+async function handleAutoImportVideo(file, targetPointIdx = currentIndex) {
+  const videoName = (file && file.name || '').toLowerCase();
+  const isVideo = !!file && (
+    (file.type && file.type.startsWith('video/')) ||
+    /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(videoName)
+  );
+  if (!isVideo) {
+    alert('動画ファイル（MP4 / MOV / WebMなど）を指定してください。');
+    return;
+  }
+
+  showToast(`動画「${file.name}」を取り込み中...`);
+
+  const p = appData.points[targetPointIdx];
+  if (!p) return;
+
+  const vId = 'video_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+  await VideoDB.saveVideo(vId, file);
+
+  const url = URL.createObjectURL(file);
+  if (!p.videos) p.videos = [];
+  p.videos.push({
+    id: vId,
+    importedAt: Date.now(),
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    url: url
+  });
+
+  p.videoClip = true;
+  p.videoName = file.name;
+  if (p.videoStartSec === undefined) p.videoStartSec = 0;
+  if (p.videoEndSec === undefined) p.videoEndSec = 0;
+
+  saveDataToStorage();
+  renderPointList();
+  renderMediaInEditor(p);
+  renderMarkers();
+  await updateVideoSection(targetPointIdx);
+  showToast(`✓ 動画「${file.name}」を取り込みました！（地図ピンからも再生できます）`);
+}
+
+// ドロップゾーンイベント
+const videoDropZone = document.getElementById('videoDropZone');
+const videoFileInput = document.getElementById('videoFileInput');
+const mediaVideoFileInput = document.getElementById('mediaVideoFileInput');
+
+if (videoDropZone) {
+  ['dragenter', 'dragover'].forEach(name => {
+    videoDropZone.addEventListener(name, (e) => {
+      e.preventDefault();
+      videoDropZone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach(name => {
+    videoDropZone.addEventListener(name, (e) => {
+      e.preventDefault();
+      videoDropZone.classList.remove('dragover');
+    });
+  });
+  videoDropZone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files.length) handleAutoImportVideo(files[0], currentIndex);
+  });
+}
+if (videoFileInput) {
+  videoFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) handleAutoImportVideo(e.target.files[0], currentIndex);
+    e.target.value = '';
+  });
+}
+if (mediaVideoFileInput) {
+  mediaVideoFileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const f of files) {
+      await handleAutoImportVideo(f, currentIndex);
+    }
+    e.target.value = '';
+  });
+}
+
+// 写真追加イベント
+document.getElementById('photoFileInput').addEventListener('change', async (e) => {
+  if (currentIndex < 0 || currentIndex >= appData.points.length) return;
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+
+  const p = appData.points[currentIndex];
+  if (!p.photos) p.photos = [];
+
+  showToast('写真を圧縮して取り込み中...');
+  let addedCount = 0;
+
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    try {
+      const resizedBase64 = await resizePhoto(f);
+      p.photos.push(resizedBase64);
+      addedCount++;
+    } catch (err) {
+      console.warn('画像取り込みエラー:', err);
+    }
+  }
+
+  saveDataToStorage();
+  renderMediaInEditor(p);
+  renderMarkers();
+  renderPointList();
+  showToast(`${addedCount}枚の写真を追加しました`);
+  e.target.value = '';
+});
+
+function resizePhoto(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const MAX_DIM = 1400;
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w > h) {
+            h = Math.round((h * MAX_DIM) / w);
+            w = MAX_DIM;
+          } else {
+            w = Math.round((w * MAX_DIM) / h);
+            h = MAX_DIM;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 地点内容保存
+document.getElementById('btnSavePoint').addEventListener('click', () => {
+  if (currentIndex < 0 || currentIndex >= appData.points.length) return;
+  const p = appData.points[currentIndex];
+
+  p.name = document.getElementById('inputPointName').value.trim() || '名称未設定';
+  p.time = document.getElementById('inputPointTime').value.trim();
+  p.desc = document.getElementById('inputPointDesc').value.trim();
+  p.memo = document.getElementById('inputPointMemo').value.trim();
+
+  const startSec = parseFloat(document.getElementById('inputVideoStartSec').value);
+  const endSec = parseFloat(document.getElementById('inputVideoEndSec').value);
+  if (!isNaN(startSec)) p.videoStartSec = startSec;
+  if (!isNaN(endSec)) p.videoEndSec = endSec;
+
+  const coords = document.getElementById('inputPointCoords').value.split(',');
+  if (coords.length === 2) {
+    const lat = parseFloat(coords[0]);
+    const lon = parseFloat(coords[1]);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      p.lat = lat;
+      p.lon = lon;
+    }
+  }
+
+  const editedPoint = p;
+  sortPointsChronologically();
+  refreshHeaderTimesFromPoints();
+  currentIndex = appData.points.indexOf(editedPoint);
+  saveDataToStorage();
+  updateHeaderDisplay();
+  renderPointList();
+  renderMarkers();
+
+  if (markers[currentIndex]) {
+    markers[currentIndex].setLatLng([p.lat, p.lon]);
+    markers[currentIndex].setPopupContent(buildPopupContent(p, currentIndex));
+    markers[currentIndex].openPopup();
+  }
+
+  document.getElementById('pointSaveStatus').textContent = '✓ 保存しました (地図ピンにも反映)';
+  showToast('地点の内容と感想を保存しました');
+});
+
+// 地点順序移動・削除・追加
+document.getElementById('btnMovePointUp').addEventListener('click', () => {
+  if (currentIndex <= 0) return;
+  const temp = appData.points[currentIndex];
+  appData.points[currentIndex] = appData.points[currentIndex - 1];
+  appData.points[currentIndex - 1] = temp;
+  currentIndex--;
+  saveDataToStorage();
+  renderPointList();
+  renderMarkers();
+  selectPoint(currentIndex, true);
+});
+
+document.getElementById('btnMovePointDown').addEventListener('click', () => {
+  if (currentIndex >= appData.points.length - 1) return;
+  const temp = appData.points[currentIndex];
+  appData.points[currentIndex] = appData.points[currentIndex + 1];
+  appData.points[currentIndex + 1] = temp;
+  currentIndex++;
+  saveDataToStorage();
+  renderPointList();
+  renderMarkers();
+  selectPoint(currentIndex, true);
+});
+
+document.getElementById('btnDeletePoint').addEventListener('click', () => {
+  if (appData.points.length <= 1) {
+    alert('これ以上地点を削除できません。');
+    return;
+  }
+  if (!confirm(`「${appData.points[currentIndex].name}」を削除してもよろしいですか？`)) return;
+
+  appData.points.splice(currentIndex, 1);
+  if (currentIndex >= appData.points.length) currentIndex = appData.points.length - 1;
+  saveDataToStorage();
+  renderPointList();
+  renderMarkers();
+  selectPoint(currentIndex, true);
+  showToast('地点を削除しました');
+});
+
+document.getElementById('btnAddPoint').addEventListener('click', () => {
+  let newLat = 33.65, newLon = 132.65;
+  if (map) {
+    const c = map.getCenter();
+    newLat = Math.round(c.lat * 10000000) / 10000000;
+    newLon = Math.round(c.lng * 10000000) / 10000000;
+  }
+  const newPt = {
+    name: "新しい立ち寄り地点",
+    lat: newLat,
+    lon: newLon,
+    time: "12:00",
+    desc: "地点の説明を入力",
+    memo: "",
+    photos: [],
+    videos: []
+  };
+  appData.points.push(newPt);
+  sortPointsChronologically();
+  currentIndex = appData.points.indexOf(newPt);
+  saveDataToStorage();
+  renderPointList();
+  renderMarkers();
+  selectPoint(currentIndex, true);
+  showToast('新しい地点を追加しました');
+});
+
+// ==========================================
+// 【要件①】GoogleタイムラインJSONの超強力パーサー
+// ==========================================
+function parseJsonFile(jsonStr, mode, targetDate) {
+  let data;
+  try {
+    data = JSON.parse(jsonStr);
+  } catch (err) {
+    alert('JSONファイルの解析に失敗しました。ファイルが壊れていないか確認してください。');
+    return;
+  }
+
+  // 1. 本アプリのエクスポートJSON形式
+  if (data.points && data.track) {
+    const selectedPoint = appData.points && appData.points[currentIndex];
+    if (mode === 'replace') {
+      appData = data;
+      if (!Array.isArray(appData.trackTimes)) appData.trackTimes = [];
+    } else {
+      appData.points = appData.points.concat(data.points);
+      appData.track = appData.track.concat(data.track);
+      appData.trackTimes = (Array.isArray(appData.trackTimes) ? appData.trackTimes : []).concat(Array.isArray(data.trackTimes) ? data.trackTimes : []);
+    }
+    sortPointsChronologically();
+    refreshHeaderTimesFromPoints();
+    finishImport(selectedPoint);
+    return;
+  }
+
+  const newTrack = [];
+  const newTrackTimes = [];
+  const newTrackTs = [];
+  const newPoints = [];
+  // 軌跡に1点追加（表示用の時刻文字列と、並べ替え用の日時を一緒に保持）
+  const pushTrack = (coords, isoTime) => {
+    newTrack.push(coords);
+    newTrackTimes.push(isoTime ? formatTimestamp(isoTime) : "");
+    const t = isoTime ? Date.parse(isoTime) : NaN;
+    newTrackTs.push(Number.isFinite(t) ? t : null);
+  };
+
+  function extractLatLng(obj) {
+    if (!obj) return null;
+    // 文字列 "33.79°, 132.87°" 形式（タイムラインの point / latLng）の解析
+    if (typeof obj === 'string') {
+      const m = obj.match(/(-?\d+(?:\.\d+)?)°,\s*(-?\d+(?:\.\d+)?)°/);
+      if (m) return [Math.round(parseFloat(m[1]) * 10000000) / 10000000, Math.round(parseFloat(m[2]) * 10000000) / 10000000];
+      return null;
+    }
+    if (obj.latLng) return extractLatLng(obj.latLng);
+    let lat = null, lon = null;
+    if (obj.latitudeE7 !== undefined && obj.longitudeE7 !== undefined) {
+      lat = obj.latitudeE7 / 1e7;
+      lon = obj.longitudeE7 / 1e7;
+    } else if (obj.latE7 !== undefined && obj.lngE7 !== undefined) {
+      lat = obj.latE7 / 1e7;
+      lon = obj.lngE7 / 1e7;
+    } else if (obj.latitude !== undefined && obj.longitude !== undefined) {
+      lat = parseFloat(obj.latitude);
+      lon = parseFloat(obj.longitude);
+    } else if (obj.lat !== undefined && obj.lng !== undefined) {
+      lat = parseFloat(obj.lat);
+      lon = parseFloat(obj.lng);
+    } else if (obj.lat !== undefined && obj.lon !== undefined) {
+      lat = parseFloat(obj.lat);
+      lon = parseFloat(obj.lon);
+    } else if (Array.isArray(obj) && obj.length >= 2) {
+      if (Math.abs(obj[0]) <= 90 && Math.abs(obj[1]) > 90) {
+        lat = obj[0]; lon = obj[1];
+      } else {
+        lon = obj[0]; lat = obj[1];
+      }
+    } else if (obj.centerLatE7 !== undefined && obj.centerLngE7 !== undefined) {
+      lat = obj.centerLatE7 / 1e7;
+      lon = obj.centerLngE7 / 1e7;
+    } else if (obj.point) {
+      return extractLatLng(obj.point);
+    } else if (obj.location) {
+      return extractLatLng(obj.location);
+    }
+    if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+      return [Math.round(lat * 10000000) / 10000000, Math.round(lon * 10000000) / 10000000];
+    }
+    return null;
+  }
+
+  function extractTimeStr(start, end) {
+    let s = start ? formatTimestamp(start) : "";
+    let e = end ? formatTimestamp(end) : "";
+    if (s && e) return s === e ? s : `${s}–${e}`;
+    return s || e || "";
+  }
+
+  const items = Array.isArray(data) ? data : 
+                (data.timelineObjects || data.semanticSegments || data.rawSignals || data.locations || (data.features ? data.features : [data]));
+
+  // 日付で絞り込む（指定がある場合、その日と重なるセグメントだけ残す）
+  let dayStart = null, dayEnd = null;
+  if (targetDate) {
+    const t = new Date(targetDate + 'T00:00:00+09:00').getTime();
+    if (Number.isFinite(t)) { dayStart = t; dayEnd = t + 24 * 3600 * 1000; }
+  }
+  function inDay(startIso, endIso) {
+    if (dayStart === null) return true;
+    const s = startIso ? Date.parse(startIso) : NaN;
+    const e = endIso ? Date.parse(endIso) : NaN;
+    if (!Number.isFinite(s) && !Number.isFinite(e)) return true; // 時刻不明は残す
+    const ss = Number.isFinite(s) ? s : e;
+    const ee = Number.isFinite(e) ? e : s;
+    return ss < dayEnd && ee >= dayStart;
+  }
+
+  items.forEach((item) => {
+    const segStart = item.startTime || item.timestamp ||
+      (item.placeVisit && item.placeVisit.duration && item.placeVisit.duration.startTimestamp) ||
+      (item.activitySegment && item.activitySegment.duration && item.activitySegment.duration.startTimestamp);
+    const segEnd = item.endTime || item.timestamp ||
+      (item.placeVisit && item.placeVisit.duration && item.placeVisit.duration.endTimestamp) ||
+      (item.activitySegment && item.activitySegment.duration && item.activitySegment.duration.endTimestamp);
+    if (!inDay(segStart, segEnd)) return;
+    // パターンA: timelineObjects (placeVisit / activitySegment)
+    if (item.placeVisit) {
+      const pv = item.placeVisit;
+      const loc = pv.location || {};
+      const coords = extractLatLng(loc) || extractLatLng(pv.centerLatE7 ? pv : null);
+      const name = loc.name || loc.address || `立ち寄り地点 ${newPoints.length + 1}`;
+      const timeStr = pv.duration ? extractTimeStr(pv.duration.startTimestamp, pv.duration.endTimestamp) : "";
+
+      if (coords) {
+        newPoints.push({
+          name: name,
+          lat: coords[0],
+          lon: coords[1],
+          time: timeStr,
+          ...(pv.duration && pv.duration.startTimestamp ? { startTimestamp: pv.duration.startTimestamp } : {}),
+          ...(pv.duration && pv.duration.endTimestamp ? { endTimestamp: pv.duration.endTimestamp } : {}),
+          desc: loc.address ? `住所: ${loc.address}` : "タイムライン滞在地点",
+          memo: "",
+          photos: [],
+          videos: []
+        });
+        pushTrack(coords, pv.duration && pv.duration.startTimestamp);
+      }
+    }
+
+    if (item.activitySegment) {
+      const act = item.activitySegment;
+      const sCoord = extractLatLng(act.startLocation);
+      const eCoord = extractLatLng(act.endLocation);
+      if (sCoord) pushTrack(sCoord, act.duration && act.duration.startTimestamp);
+
+      const rawPts = (act.simplifiedRawPath && act.simplifiedRawPath.points) ||
+                     (act.waypointPath && act.waypointPath.waypoints) ||
+                     act.timelinePath || [];
+      rawPts.forEach(pt => {
+        const c = extractLatLng(pt);
+        if (c) pushTrack(c, pt && pt.time);
+      });
+      if (eCoord) pushTrack(eCoord, act.duration && act.duration.endTimestamp);
+    }
+
+    // パターンB: semanticSegments (visit / activity)
+    if (item.visit) {
+      const v = item.visit;
+      const coords = extractLatLng(v.topCandidate ? v.topCandidate.placeLocation : null) || extractLatLng(v);
+      const sem = v.topCandidate && v.topCandidate.semanticType;
+      const semName = sem === 'HOME' ? '自宅' : (sem === 'WORK' || sem === 'INFERRED_WORK') ? '職場' : sem === 'SEARCHED_ADDRESS' ? '検索した地点' : '';
+      const name = semName || `訪問地点 ${newPoints.length + 1}`;
+      const timeStr = extractTimeStr(item.startTime || v.startTime, item.endTime || v.endTime);
+      if (coords) {
+        newPoints.push({
+          name: name,
+          lat: coords[0],
+          lon: coords[1],
+          time: timeStr,
+          ...(item.startTime || v.startTime ? { startTimestamp: item.startTime || v.startTime } : {}),
+          ...(item.endTime || v.endTime ? { endTimestamp: item.endTime || v.endTime } : {}),
+          desc: "タイムライン滞在セグメント",
+          memo: "",
+          photos: [],
+          videos: []
+        });
+        pushTrack(coords, item.startTime);
+      }
+    }
+
+    // パターンB2: semanticSegments (timelinePath) ← 移動経路の実データ
+    if (item.timelinePath) {
+      item.timelinePath.forEach(pt => {
+        const c = extractLatLng(pt);
+        if (c) pushTrack(c, pt && pt.time);
+      });
+    }
+
+    // パターンB3: semanticSegments (activity) ← 移動の始点・終点
+    if (item.activity) {
+      const sc = extractLatLng(item.activity.start);
+      const ec = extractLatLng(item.activity.end);
+      if (sc) pushTrack(sc, item.startTime);
+      if (ec) pushTrack(ec, item.endTime);
+    }
+
+    // パターンC: locations配列 (Records.json)
+    if (item.latitudeE7 !== undefined || item.latitude !== undefined) {
+      const coords = extractLatLng(item);
+      if (coords) pushTrack(coords, item.timestamp);
+    }
+
+    // パターンD: GeoJSON Feature
+    if (item.geometry && item.geometry.coordinates) {
+      const gType = item.geometry.type;
+      const coords = item.geometry.coordinates;
+      if (gType === 'Point') {
+        const c = extractLatLng(coords);
+        if (c) {
+          newPoints.push({
+            name: (item.properties && item.properties.name) || `地点 ${newPoints.length + 1}`,
+            lat: c[0],
+            lon: c[1],
+            time: (item.properties && item.properties.time) || "",
+            desc: (item.properties && item.properties.desc) || "GeoJSONインポート地点",
+            memo: "",
+            photos: [],
+            videos: []
+          });
+          pushTrack(c, (item.properties && item.properties.time) || null);
+        }
+      } else if (gType === 'LineString') {
+        coords.forEach(pt => {
+          const c = extractLatLng(pt);
+          if (c) pushTrack(c, null);
+        });
+      }
+    }
+  });
+
+  // 地点が0件で軌跡がある場合は自動で開始・中継・終了地点を生成
+  if (newPoints.length === 0 && newTrack.length > 0) {
+    newPoints.push({
+      name: "出発地点",
+      lat: newTrack[0][0],
+      lon: newTrack[0][1],
+      time: newTrackTimes.find(t => t) || "開始",
+      desc: "GPSログの開始地点",
+      memo: "",
+      photos: [],
+      videos: []
+    });
+    if (newTrack.length >= 20) {
+      const midIdx = Math.floor(newTrack.length / 2);
+      newPoints.push({
+        name: "中継地点",
+        lat: newTrack[midIdx][0],
+        lon: newTrack[midIdx][1],
+        time: newTrackTimes[midIdx] || "途中",
+        desc: "GPSログの中間地点",
+        memo: "",
+        photos: [],
+        videos: []
+      });
+    }
+    newPoints.push({
+      name: "帰着地点",
+      lat: newTrack[newTrack.length - 1][0],
+      lon: newTrack[newTrack.length - 1][1],
+      time: newTrackTimes.slice().reverse().find(t => t) || "終了",
+      desc: "GPSログの終了地点",
+      memo: "",
+      photos: [],
+      videos: []
+    });
+  }
+
+  if (newTrack.length === 0 && newPoints.length === 0) {
+    alert(targetDate ? (targetDate + ' のデータが見つかりませんでした。日付を変えるか、空欄にして取り込んでください。') : '指定されたJSONファイルから有効な位置情報を検出できませんでした。');
+    return;
+  }
+
+  applyParsedData(newTrack, newPoints, mode, newTrackTimes, newTrackTs);
+  // 日付で絞り込んだ場合は、その日付をタイトルにする
+  if (targetDate && mode === 'replace') {
+    const d = new Date(targetDate + 'T00:00:00+09:00');
+    if (Number.isFinite(d.getTime())) {
+      appData.title = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日のツーリング記録';
+      updateHeaderDisplay();
+      saveDataToStorage();
+    }
+  }
+}
+
+// 軌跡から走行距離を自動計算して stats.distance に反映
+function recalcDistanceFromTrack() {
+  if (!appData.track || appData.track.length < 2) return;
+  let totalMeters = 0;
+  for (let i = 0; i < appData.track.length - 1; i++) {
+    totalMeters += calcDistance(
+      appData.track[i][0], appData.track[i][1],
+      appData.track[i + 1][0], appData.track[i + 1][1]
+    );
+  }
+  if (totalMeters > 0) appData.stats.distance = '約' + (totalMeters / 1000).toFixed(1) + ' km';
+}
+
+// 主なエリアを、出発・中間・帰着の座標から市町村名で自動入力（ネット必須・失敗時は空欄のまま）
+async function autoFillAreaFromTrack() {
+  if (!appData.track || appData.track.length === 0) return;
+  const picks = [
+    appData.track[0],
+    appData.track[Math.floor(appData.track.length / 2)],
+    appData.track[appData.track.length - 1]
+  ];
+  const names = [];
+  for (const pt of picks) {
+    try {
+      const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + pt[0] + '&lon=' + pt[1] + '&zoom=10&accept-language=ja');
+      if (!res.ok) continue;
+      const j = await res.json();
+      const a = (j && j.address) || {};
+      const city = a.city || a.town || a.village || a.county || '';
+      const short = city.replace(/(市|町|村)$/, '');
+      if (short && !names.includes(short)) names.push(short);
+    } catch (e) { /* オフライン時は何もしない */ }
+  }
+  if (names.length) {
+    appData.stats.area = names.join('・');
+    updateHeaderDisplay();
+    saveDataToStorage();
+  }
+}
+
+// GPXパーサー
+function parseGpxFile(gpxStr, mode) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(gpxStr, "text/xml");
+  const newTrack = [];
+  const newTrackTimes = [];
+  const newTrackTs = [];
+  const newPoints = [];
+
+  // 名前空間付きXMLでも確実に拾えるよう getElementsByTagName を使う
+  const trkpts = xml.getElementsByTagName('trkpt');
+  Array.prototype.forEach.call(trkpts, pt => {
+    const lat = parseFloat(pt.getAttribute('lat'));
+    const lon = parseFloat(pt.getAttribute('lon'));
+    if (!isNaN(lat) && !isNaN(lon)) {
+      newTrack.push([lat, lon]);
+      const tNode = pt.getElementsByTagName('time')[0];
+      newTrackTimes.push(tNode ? formatTimestamp(tNode.textContent) : "");
+      const tParsed = tNode ? Date.parse(tNode.textContent) : NaN;
+      newTrackTs.push(Number.isFinite(tParsed) ? tParsed : null);
+    }
+  });
+
+  const wpts = xml.getElementsByTagName('wpt');
+  Array.prototype.forEach.call(wpts, (pt, i) => {
+    const lat = parseFloat(pt.getAttribute('lat'));
+    const lon = parseFloat(pt.getAttribute('lon'));
+    const nameNode = pt.getElementsByTagName('name')[0] || null;
+    const descNode = pt.getElementsByTagName('desc')[0] || null;
+    const timeNode = pt.getElementsByTagName('time')[0] || null;
+
+    const name = nameNode ? nameNode.textContent : `ウェイポイント ${i + 1}`;
+    const desc = descNode ? descNode.textContent : "";
+    const time = timeNode ? formatTimestamp(timeNode.textContent) : "";
+
+    if (!isNaN(lat) && !isNaN(lon)) {
+      newPoints.push({
+        name: name,
+        lat: lat,
+        lon: lon,
+        time: time,
+        ...(timeNode && timeNode.textContent ? { startTimestamp: timeNode.textContent } : {}),
+        desc: desc,
+        memo: "",
+        photos: [],
+        videos: []
+      });
+    }
+  });
+
+  if (newPoints.length === 0 && newTrack.length > 0) {
+    newPoints.push({ name: "スタート地点", lat: newTrack[0][0], lon: newTrack[0][1], time: newTrackTimes[0] || "出発", desc: "GPXトラック開始", memo: "", photos: [], videos: [] });
+    newPoints.push({ name: "ゴール地点", lat: newTrack[newTrack.length - 1][0], lon: newTrack[newTrack.length - 1][1], time: newTrackTimes[newTrackTimes.length - 1] || "帰着", desc: "GPXトラック終了", memo: "", photos: [], videos: [] });
+  }
+
+  applyParsedData(newTrack, newPoints, mode, newTrackTimes, newTrackTs);
+}
+
+// KMLパーサー
+function parseKmlFile(kmlStr, mode) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(kmlStr, "text/xml");
+  const newTrack = [];
+
+  const coordNodes = xml.querySelectorAll('coordinates');
+  coordNodes.forEach(cNode => {
+    const text = cNode.textContent.trim();
+    const parts = text.split(/\s+/);
+    parts.forEach(p => {
+      const nums = p.split(',');
+      if (nums.length >= 2) {
+        const lon = parseFloat(nums[0]);
+        const lat = parseFloat(nums[1]);
+        if (!isNaN(lat) && !isNaN(lon)) newTrack.push([lat, lon]);
+      }
+    });
+  });
+
+  applyParsedData(newTrack, [], mode);
+}
+
+// NMEAパーサー
+function parseNmeaFile(nmeaStr, mode, fileName) {
+  function nmeaToDecimal(val, dir) {
+    if (!val) return null;
+    const dot = val.indexOf('.');
+    const degDigits = (dot >= 0 ? dot : val.length) - 2;
+    if (degDigits <= 0) return null;
+    const degrees = parseFloat(val.slice(0, degDigits));
+    const minutes = parseFloat(val.slice(degDigits));
+    let decimal = degrees + (minutes / 60);
+    if (dir === 'S' || dir === 'W') decimal = -decimal;
+    return Math.round(decimal * 10000000) / 10000000;
+  }
+
+  function parseNmeaDateTime(utcStr, dateStr) {
+    if (!utcStr || utcStr.length < 6 || !dateStr || dateStr.length !== 6) return null;
+    const day = Number(dateStr.slice(0, 2));
+    const month = Number(dateStr.slice(2, 4)) - 1;
+    let year = Number(dateStr.slice(4, 6));
+    year += year >= 80 ? 1900 : 2000;
+    const hour = Number(utcStr.slice(0, 2));
+    const minute = Number(utcStr.slice(2, 4));
+    const second = Number(utcStr.slice(4, 6));
+    if (![day, month, year, hour, minute, second].every(Number.isFinite)) return null;
+    // NMEAはUTC。日本時間(JST)へ9時間加算し、日付跨ぎもDate.UTCで正しく処理する。
+    return Date.UTC(year, month, day, hour, minute, second);
+  }
+
+  function formatNmeaLocalTime(timestamp) {
+    if (!Number.isFinite(timestamp)) return '';
+    const d = new Date(timestamp + 9 * 60 * 60 * 1000);
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}:${String(d.getUTCSeconds()).padStart(2, '0')}`;
+  }
+
+  const lines = nmeaStr.split(/\r?\n/);
+  const newTrack = [];
+  const trackTimestamps = [];
+  let startTime = '', endTime = '';
+  let startTimestamp = null, endTimestamp = null;
+  let firstPoint = null;
+
+  for (const line of lines) {
+    if (!line.startsWith('$')) continue;
+    const parts = line.split(',');
+    const type = parts[0].trim();
+
+    if (type.includes('RMC')) {
+      const status = parts[2];
+      if (status === 'A') {
+        const lat = nmeaToDecimal(parts[3], parts[4]);
+        const lon = nmeaToDecimal(parts[5], parts[6]);
+        const timestamp = parseNmeaDateTime(parts[1], parts[9]);
+        const time = formatNmeaLocalTime(timestamp);
+        if (lat !== null && lon !== null) {
+          if (timestamp !== null && (startTimestamp === null || timestamp < startTimestamp)) {
+            startTimestamp = timestamp;
+            startTime = time;
+          }
+          if (timestamp !== null && (endTimestamp === null || timestamp > endTimestamp)) {
+            endTimestamp = timestamp;
+            endTime = time;
+          }
+          if (!firstPoint) firstPoint = { lat, lon, time, timestamp };
+          newTrack.push([lat, lon]);
+          trackTimestamps.push(timestamp);
+        }
+      }
+    } else if (type.includes('GGA') && newTrack.length === 0) {
+      const quality = parseInt(parts[6], 10);
+      if (quality > 0) {
+        const lat = nmeaToDecimal(parts[2], parts[3]);
+        const lon = nmeaToDecimal(parts[4], parts[5]);
+        // GGAには日付がないため、同一ファイル内で先に読んだRMCの日付を利用できる場合のみ時刻を確定する。
+        const timestamp = null;
+        const time = '';
+        if (lat !== null && lon !== null) {
+          if (!firstPoint) firstPoint = { lat, lon, time, timestamp };
+          newTrack.push([lat, lon]);
+          trackTimestamps.push(timestamp);
+        }
+      }
+    }
+  }
+
+  if (newTrack.length === 0) {
+    alert('NMEAファイル内に有効なGPS位置情報が見つかりませんでした。');
+    return;
+  }
+
+  const baseName = fileName ? fileName.replace(/\.[^/.]+$/, '') : 'ドラレコ記録';
+  const timeLabel = startTime && endTime ? (startTime === endTime ? startTime : `${startTime}–${endTime}`) : '時刻未確定';
+  const newPoints = [{
+    name: `ドラレコ地点 (${baseName})`,
+    lat: firstPoint.lat,
+    lon: firstPoint.lon,
+    time: timeLabel,
+    ...(startTimestamp !== null ? { timestampStart: startTimestamp } : {}),
+    ...(endTimestamp !== null ? { timestampEnd: endTimestamp } : {}),
+    desc: `ドラレコNMEAログから取り込んだ位置情報（${newTrack.length}点）`,
+    memo: `ドラレコ記録時刻: ${timeLabel}${startTimestamp !== null ? '（日本時間）' : ''}\nファイル名: ${fileName || 'NMEA'}`,
+    photos: [],
+    videos: []
+  }];
+
+  newPoints[0].trackTimestamps = trackTimestamps;
+  applyParsedData(newTrack, newPoints, mode);
+}
+
+// データ適用とUI完全同期
+function applyParsedData(newTrack, newPoints, mode, newTrackTimes, newTrackTs) {
+  // 日時がほぼ揃っている場合は、軌跡を時刻順に並べ替える（逆順・バラバラなデータの線の乱れ対策）
+  if (Array.isArray(newTrackTs) && newTrack.length > 1 && newTrackTs.length === newTrack.length) {
+    const validCount = newTrackTs.filter(t => t !== null && t !== undefined).length;
+    if (validCount >= newTrack.length * 0.9) {
+      const order = newTrack.map((_, i) => i).sort((a, b) => ((newTrackTs[a] == null ? Infinity : newTrackTs[a]) - (newTrackTs[b] == null ? Infinity : newTrackTs[b])) || (a - b));
+      const sortedTrack = order.map(i => newTrack[i]);
+      const sortedTimes = order.map(i => (newTrackTimes || [])[i] || "");
+      for (let i = 0; i < newTrack.length; i++) newTrack[i] = sortedTrack[i];
+      if (newTrackTimes) for (let i = 0; i < newTrackTimes.length; i++) newTrackTimes[i] = sortedTimes[i];
+    }
+  }
+  const selectedPoint = appData.points && appData.points[currentIndex];
+  const times = Array.isArray(newTrackTimes) ? newTrackTimes : [];
+  if (mode === 'replace' || !appData.track || appData.track.length === 0) {
+    appData.track = newTrack;
+    appData.trackTimes = times;
+    // 置き換え時は地点も必ず入れ替える（旧地点が残らないように）
+    appData.points = newPoints.slice();
+    if (appData.points.length === 0 && newTrack.length > 0) {
+      appData.points = [
+        { name: "出発地点", lat: newTrack[0][0], lon: newTrack[0][1], time: times[0] || "開始", desc: "軌跡の開始地点", memo: "", photos: [], videos: [] },
+        { name: "帰着地点", lat: newTrack[newTrack.length - 1][0], lon: newTrack[newTrack.length - 1][1], time: times[times.length - 1] || "終了", desc: "軌跡の終了地点", memo: "", photos: [], videos: [] }
+      ];
+    }
+  } else {
+    appData.track = appData.track.concat(newTrack);
+    appData.trackTimes = (Array.isArray(appData.trackTimes) ? appData.trackTimes : []).concat(times);
+    if (newPoints.length > 0) appData.points = appData.points.concat(newPoints);
+  }
+  // 時刻配列の長さを軌跡にそろえる（無い形式は空文字で埋める）
+  if (!Array.isArray(appData.trackTimes)) appData.trackTimes = [];
+  while (appData.trackTimes.length < appData.track.length) appData.trackTimes.push("");
+  if (appData.trackTimes.length > appData.track.length) appData.trackTimes.length = appData.track.length;
+  sortPointsChronologically();
+  recalcDistanceFromTrack();
+  refreshHeaderTimesFromPoints(mode === 'replace');
+  finishImport(selectedPoint);
+  if (mode === 'replace' || !appData.stats.area) autoFillAreaFromTrack();
+}
+
+// 取り込み後は時系列順・選択状態・地図・動画パネルをまとめて同期
+function finishImport(previouslySelectedPoint = null) {
+  if (previouslySelectedPoint) {
+    const preservedIndex = appData.points.indexOf(previouslySelectedPoint);
+    if (preservedIndex >= 0) currentIndex = preservedIndex;
+  }
+  if (!appData.points.length) currentIndex = -1;
+  else currentIndex = Math.max(0, Math.min(currentIndex, appData.points.length - 1));
+
+  saveDataToStorage();
+  updateHeaderDisplay();
+  initMap();
+  renderPointList();
+  if (appData.points.length) selectPoint(currentIndex, true);
+
+  const modalImport = document.getElementById('modalImport');
+  if (modalImport) modalImport.classList.remove('active');
+  showToast(`取り込み完了！（地点 ${appData.points.length}件, 軌跡 ${appData.track.length}点 を反映しました）`);
+}
+
+function formatTimestamp(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch (e) {
+    return isoStr;
+  }
+}
+
+// ファイル取り込みモーダルのイベント
+const modalImport = document.getElementById('modalImport');
+document.getElementById('btnImportModal').addEventListener('click', () => {
+  modalImport.classList.add('active');
+});
+
+const dropZone = document.getElementById('dropZone');
+const fileImportInput = document.getElementById('fileImportInput');
+
+['dragenter', 'dragover'].forEach(name => {
+  dropZone.addEventListener(name, (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach(name => {
+  dropZone.addEventListener(name, (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+  });
+});
+
+dropZone.addEventListener('drop', (e) => {
+  const files = Array.from(e.dataTransfer.files || []);
+  if (files.length) handleImportFiles(files);
+});
+fileImportInput.addEventListener('change', (e) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length) handleImportFiles(files);
+  e.target.value = '';
+});
+
+async function handleImportFiles(files) {
+  const videoFiles = files.filter(f => f.type.startsWith('video/') || f.name.toLowerCase().endsWith('.mp4') || f.name.toLowerCase().endsWith('.mov'));
+  const logFiles = files.filter(f => !f.type.startsWith('video/') && !f.name.toLowerCase().endsWith('.mp4') && !f.name.toLowerCase().endsWith('.mov'));
+
+  if (logFiles.length > 0) {
+    for (const lf of logFiles) {
+      await processSingleLogFile(lf);
+    }
+  }
+
+  if (videoFiles.length > 0) {
+    for (const vf of videoFiles) {
+      let targetIdx = currentIndex;
+      const vBase = vf.name.toLowerCase().replace(/\.[^/.]+$/, '');
+      const matchedIdx = appData.points.findIndex(p => p.name && p.name.toLowerCase().includes(vBase));
+      if (matchedIdx >= 0) targetIdx = matchedIdx;
+
+      await handleAutoImportVideo(vf, targetIdx);
+    }
+  }
+
+  modalImport.classList.remove('active');
+}
+
+function processSingleLogFile(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    const fileName = file.name.toLowerCase();
+
+    reader.onload = (e) => {
+      const content = e.target.result;
+      try {
+        const mode = document.querySelector('input[name="importMode"]:checked').value;
+        const dateEl = document.getElementById('importDateFilter');
+        const targetDate = dateEl && dateEl.value ? dateEl.value : '';
+        if (fileName.endsWith('.json')) {
+          parseJsonFile(content, mode, targetDate);
+        } else if (fileName.endsWith('.gpx')) {
+          parseGpxFile(content, mode);
+        } else if (fileName.endsWith('.kml')) {
+          parseKmlFile(content, mode);
+        } else if (fileName.endsWith('.nmea') || fileName.endsWith('.log')) {
+          parseNmeaFile(content, mode, file.name);
+        } else {
+          if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+            parseJsonFile(content, mode, targetDate);
+          } else if (content.includes('<gpx')) {
+            parseGpxFile(content, mode);
+          } else if (content.includes('$GP') || content.includes('$GN')) {
+            parseNmeaFile(content, mode, file.name);
+          } else {
+            alert('対応していないファイル形式です（JSON, GPX, KML, NMEAファイルを指定してください）。');
+          }
+        }
+      } catch (err) {
+        alert('ファイルの解析中にエラーが発生しました: ' + err.message);
+      }
+      resolve();
+    };
+
+    reader.readAsText(file);
+  });
+}
+
+// ==========================================
+// 写真拡大モーダル（ライトボックス）
+// ==========================================
+let currentLightboxPointIdx = 0;
+let currentLightboxPhotoIdx = 0;
+
+function openLightboxFromPoint(pointIdx, photoIdx) {
+  const p = appData.points[pointIdx];
+  if (!p || !p.photos || !p.photos.length) return;
+
+  currentLightboxPointIdx = pointIdx;
+  currentLightboxPhotoIdx = photoIdx;
+  updateLightboxImage();
+
+  const modal = document.getElementById('lightboxModal');
+  modal.classList.add('active');
+}
+
+function updateLightboxImage() {
+  const p = appData.points[currentLightboxPointIdx];
+  const photos = p.photos;
+  if (!photos || currentLightboxPhotoIdx < 0 || currentLightboxPhotoIdx >= photos.length) return;
+
+  const img = document.getElementById('lightboxImg');
+  img.src = photos[currentLightboxPhotoIdx];
+
+  const caption = document.getElementById('lightboxCaption');
+  caption.textContent = `${p.name} - 写真 (${currentLightboxPhotoIdx + 1} / ${photos.length})`;
+
+  document.getElementById('lightboxPrev').style.display = photos.length > 1 ? 'flex' : 'none';
+  document.getElementById('lightboxNext').style.display = photos.length > 1 ? 'flex' : 'none';
+}
+
+document.getElementById('lightboxClose').addEventListener('click', () => {
+  document.getElementById('lightboxModal').classList.remove('active');
+});
+
+document.getElementById('lightboxPrev').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const p = appData.points[currentLightboxPointIdx];
+  if (!p || !p.photos.length) return;
+  currentLightboxPhotoIdx = (currentLightboxPhotoIdx - 1 + p.photos.length) % p.photos.length;
+  updateLightboxImage();
+});
+
+document.getElementById('lightboxNext').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const p = appData.points[currentLightboxPointIdx];
+  if (!p || !p.photos.length) return;
+  currentLightboxPhotoIdx = (currentLightboxPhotoIdx + 1) % p.photos.length;
+  updateLightboxImage();
+});
+
+window.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('lightboxModal');
+  if (modal.classList.contains('active')) {
+    if (e.key === 'Escape') modal.classList.remove('active');
+    if (e.key === 'ArrowLeft') document.getElementById('lightboxPrev').click();
+    if (e.key === 'ArrowRight') document.getElementById('lightboxNext').click();
+  }
+});
+
+document.getElementById('lightboxModal').addEventListener('click', (e) => {
+  if (e.target.id === 'lightboxModal' || e.target.classList.contains('lightbox-content')) {
+    document.getElementById('lightboxModal').classList.remove('active');
+  }
+});
+
+// ==========================================
+// プロジェクト保存・読込
+// ==========================================
+const modalProject = document.getElementById('modalProject');
+document.getElementById('btnProjectModal').addEventListener('click', () => {
+  modalProject.classList.add('active');
+});
+
+document.getElementById('btnDownloadProjectJson').addEventListener('click', () => {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, stripBlobUrls, 2));
+  const a = document.createElement('a');
+  a.setAttribute("href", dataStr);
+  const cleanTitle = appData.title.replace(/[\\/:*?"<>|]/g, '_');
+  a.setAttribute("download", `${cleanTitle}_プロジェクトデータ.json`);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  showToast('プロジェクトJSONをダウンロードしました');
+});
+
+document.getElementById('btnSaveBrowserStorage').addEventListener('click', () => {
+  saveDataToStorage();
+  showToast('ブラウザストレージに保存しました');
+});
+
+// ==========================================
+// タイトル・基本情報の編集モーダル
+// ==========================================
+const modalEditHeader = document.getElementById('modalEditHeader');
+document.getElementById('btnEditHeader').addEventListener('click', openHeaderEditModal);
+document.getElementById('btnEditOverview').addEventListener('click', openHeaderEditModal);
+
+function openHeaderEditModal() {
+  document.getElementById('editMainTitle').value = appData.title;
+  document.getElementById('editSubtitle').value = appData.subtitle;
+  document.getElementById('editStatStart').value = appData.stats.start;
+  document.getElementById('editStatEnd').value = appData.stats.end;
+  document.getElementById('editStatDistance').value = appData.stats.distance;
+  document.getElementById('editStatArea').value = appData.stats.area;
+  document.getElementById('editOverview').value = appData.overview;
+  document.getElementById('editOverviewNote').value = appData.overviewNote;
+  modalEditHeader.classList.add('active');
+}
+
+document.getElementById('btnSaveHeaderModal').addEventListener('click', () => {
+  appData.title = document.getElementById('editMainTitle').value.trim() || 'ツーリング記録';
+  appData.subtitle = document.getElementById('editSubtitle').value.trim();
+  appData.stats.start = document.getElementById('editStatStart').value.trim();
+  appData.stats.end = document.getElementById('editStatEnd').value.trim();
+  appData.stats.distance = document.getElementById('editStatDistance').value.trim();
+  appData.stats.area = document.getElementById('editStatArea').value.trim();
+  appData.overview = document.getElementById('editOverview').value.trim();
+  appData.overviewNote = document.getElementById('editOverviewNote').value.trim();
+
+  saveDataToStorage();
+  updateHeaderDisplay();
+  modalEditHeader.classList.remove('active');
+  showToast('タイトルと基本情報を保存しました');
+});
+
+document.querySelectorAll('.modal-close').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+  });
+});
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
+});
+
+// ==========================================
+// ブログ公開用HTMLエクスポート（完全保護）
+// ==========================================
+const modalExport = document.getElementById('modalExport');
+document.getElementById('btnExportBlog').addEventListener('click', () => {
+  modalExport.classList.add('active');
+});
+
+document.getElementById('btnGenerateProtectedHtml').addEventListener('click', () => {
+  const protectContextMenu = document.getElementById('protectContextMenu').checked;
+  const protectTextSelect = document.getElementById('protectTextSelect').checked;
+  const protectShortcuts = document.getElementById('protectShortcuts').checked;
+
+  const html = generateProtectedBlogHtml(appData, {
+    protectContextMenu,
+    protectTextSelect,
+    protectShortcuts
+  });
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const cleanTitle = appData.title.replace(/[\\/:*?"<>|]/g, '_');
+  a.download = `${cleanTitle}_ブログ公開版.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  modalExport.classList.remove('active');
+  showToast('🛡️ 完全保護されたブログ公開版HTMLを出力しました！');
+});
+
+function generateProtectedBlogHtml(data, opts) {
+  const pointsJson = JSON.stringify(data.points);
+  const trackJson = JSON.stringify(data.track);
+
+  let securityScript = '';
+  if (opts.protectContextMenu) {
+    securityScript += `
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });`;
+  }
+  if (opts.protectTextSelect) {
+    securityScript += `
+  document.addEventListener('selectstart', function(e) { e.preventDefault(); return false; });`;
+  }
+  if (opts.protectShortcuts) {
+    securityScript += `
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || (e.ctrlKey && (e.key === 'u' || e.key === 'U')) || 
+       (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j'))) {
+      e.preventDefault();
+      return false;
+    }
+  });`;
+  }
+
+  const sTagOpen = '<' + 'script' + '>';
+  const sTagClose = '<' + '/script' + '>';
+
+  return `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(data.title)}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'">
+<style>
+:root { color-scheme: light; --pri: #203c49; --acc: #0b7a8b; }
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, "Yu Gothic UI", Meiryo, sans-serif;
+  margin: 0;
+  background: #f3f5f6;
+  color: #20272b;
+  line-height: 1.65;
+  ${opts.protectTextSelect ? 'user-select: none; -webkit-user-select: none;' : ''}
+}
+header {
+  background: var(--pri);
+  color: #fff;
+  padding: 24px max(16px, calc((100% - 1120px)/2));
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+main { max-width: 1120px; margin: 20px auto 40px; padding: 0 15px; }
+h1 { font-size: 1.65rem; margin: 0 0 6px; }
+h2 { font-size: 1.22rem; margin: 0 0 12px; color: var(--pri); }
+.subtitle { font-size: 0.95rem; color: #b7c8d0; }
+.panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 16px 0;
+  box-shadow: 0 2px 9px rgba(0,0,0,0.06);
+  border: 1px solid #dbe3e7;
+}
+.stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.stat { background: #edf3f5; padding: 9px 14px; border-radius: 8px; min-width: 120px; flex: 1; }
+.stat b { display: block; font-size: 1.22rem; color: var(--pri); }
+.muted, small { color: #64717a; }
+#map { height: 560px; border: 1px solid #d5dce0; border-radius: 9px; background: #e8edf0; z-index: 1; }
+.markerlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.markerlist button {
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid #d7dfe3;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  transition: all 0.15s ease;
+}
+.markerlist button:hover { background: #f0f6f8; border-color: var(--acc); }
+video { width: 100%; max-height: 380px; background: #111; border-radius: 8px; display: block; }
+.btn-play {
+  background: var(--acc);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 15px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-play:hover { background: #0e94a8; }
+.leaflet-popup-content-wrapper { border-radius: 8px; padding: 4px; }
+.popup-box { max-width: 290px; font-size: 0.9rem; line-height: 1.5; }
+.popup-label { display: block; font-size: 0.75rem; font-weight: 600; color: #456; margin-top: 7px; }
+.popup-input { width: 100%; box-sizing: border-box; font-size: 0.92rem; padding: 5px 7px; border: 1px solid #c4d2d9; border-radius: 6px; margin-top: 2px; font-family: inherit; }
+.popup-edit-btn { margin-top: 8px; width: 100%; padding: 6px; border: 1.5px solid #0b7a8b; background: #fff; color: #0b7a8b; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.popup-save-btn { flex: 1; padding: 7px; border: none; background: #0b7a8b; color: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.popup-cancel-btn { flex: 1; padding: 7px; border: 1.5px solid #9db3bd; background: #fff; color: #345; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.popup-title { font-size: 1.05rem; font-weight: 700; color: var(--pri); margin-bottom: 2px; }
+.popup-time { font-size: 0.82rem; color: var(--acc); font-weight: 600; margin-bottom: 4px; }
+.popup-desc { font-size: 0.84rem; color: #555; margin-bottom: 6px; border-bottom: 1px dashed #d5e0e5; padding-bottom: 4px; }
+.popup-memo {
+  background: #f0f7fa;
+  border-left: 3px solid var(--acc);
+  padding: 6px 9px;
+  margin: 6px 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.86rem;
+  color: #243842;
+  white-space: pre-wrap;
+}
+.popup-photos { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+.popup-photo-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #c9d6dc;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.popup-photo-thumb:hover { transform: scale(1.08); }
+
+.lightbox-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(10, 18, 24, 0.94);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.lightbox-modal.active { display: flex; }
+.lightbox-content { position: relative; max-width: 90vw; max-height: 85vh; display: flex; justify-content: center; align-items: center; }
+.lightbox-img { max-width: 90vw; max-height: 80vh; object-fit: contain; border-radius: 6px; }
+.lightbox-close {
+  position: absolute; top: 20px; right: 25px;
+  background: rgba(255,255,255,0.2); color: #fff; border: 0; border-radius: 50%;
+  width: 44px; height: 44px; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.2); color: #fff; border: 0; border-radius: 50%;
+  width: 46px; height: 46px; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-prev { left: 20px; }
+.lightbox-next { right: 20px; }
+.lightbox-caption { color: #e0e9ee; margin-top: 12px; font-size: 0.95rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>${escapeHtml(data.title)}</h1>
+  <div class="subtitle">${escapeHtml(data.subtitle)}</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>今日の走行メモ</h2>
+    <div class="stats">
+      <div class="stat"><small>走行開始</small><b>${escapeHtml(data.stats.start)}</b></div>
+      <div class="stat"><small>帰着</small><b>${escapeHtml(data.stats.end)}</b></div>
+      <div class="stat"><small>走行距離</small><b>${escapeHtml(data.stats.distance)}</b></div>
+      <div class="stat"><small>主なエリア</small><b>${escapeHtml(data.stats.area)}</b></div>
+    </div>
+    <div>${data.overview.split('\n\n').map(p => '<p>' + escapeHtml(p).replace(/\n/g, '<br>') + '</p>').join('')}</div>
+    <p class="muted"><small>${escapeHtml(data.overviewNote)}</small></p>
+  </section>
+
+  <section class="panel">
+    <h2>GPS走行ルート地図</h2>
+    <div id="mapStatus" style="padding:8px; background:#fff7e6; border-radius:6px; margin-bottom:8px; font-size:0.88rem;">地図を読み込んでいます...</div>
+    <div id="map"></div>
+    <p class="muted" style="font-size:0.85rem; margin-top:8px;">
+      地図：国土地理院 標準地図（接続できない場合はOpenStreetMapへ自動切替）。青線＝GPS走行軌跡、マーカー＝地点（クリックすると感想・メモや写真が表示されます）。
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>ドラレコ動画</h2>
+    <video id="clip" controls playsinline preload="auto">
+      <source src="./とりてつ_13-20秒.mp4" type="video/mp4">
+      動画を再生できません。
+    </video>
+    <p style="margin-top:10px;">
+      <button class="btn-play" id="playClip" disabled>▶ この地点の動画を再生</button>
+      <span id="videoStatus" class="muted" style="margin-left:10px; font-size:0.88rem;">動画GPS地点を選択すると再生できます。</span>
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>立ち寄り地点一覧</h2>
+    <p class="muted" style="font-size:0.88rem;">地点をクリックすると、地図上で位置と感想・メモ、写真を確認できます。</p>
+    <div class="markerlist" id="markerlist"></div>
+  </section>
+
+  <footer class="muted" style="text-align:center; padding:20px 0;">
+    <small>ツーリング記録 | 地図タイル：国土地理院・OpenStreetMap | 完全保護モード</small>
+  </footer>
+</main>
+
+<div class="lightbox-modal" id="lightboxModal">
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev">‹</button>
+  <button class="lightbox-nav lightbox-next" id="lightboxNext">›</button>
+  <div class="lightbox-content">
+    <img src="" alt="拡大写真" class="lightbox-img" id="lightboxImg">
+  </div>
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+${sTagOpen.replace('>', ' src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" onerror="this.onerror=null;var s=document.createElement(\\\'script\\\');s.src=\\\'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js\\\';document.head.appendChild(s);">')}${sTagClose}
+
+${sTagOpen}
+${securityScript}
+
+const track = ${trackJson};
+const points = ${pointsJson};
+
+// 地点編集（最終版HTML用）：編集内容はこの端末のブラウザに保存される
+const EDIT_KEY = 'tdw_final_edits_' + document.title;
+let savedEdits = {};
+try { savedEdits = JSON.parse(localStorage.getItem(EDIT_KEY) || '{}'); } catch (e) { savedEdits = {}; }
+points.forEach((p, i) => {
+  const ed = savedEdits[i];
+  if (ed) { p.name = ed.name; p.time = ed.time; p.desc = ed.desc; p.memo = ed.memo; }
+});
+let finalMarkers = [];
+let finalListBtns = [];
+function persistFinalEdit(i) {
+  const p = points[i];
+  savedEdits[i] = { name: p.name, time: p.time, desc: p.desc, memo: p.memo };
+  try { localStorage.setItem(EDIT_KEY, JSON.stringify(savedEdits)); return true; } catch (e) { return false; }
+}
+function buildFinalPopup(i) {
+  const p = points[i];
+  let memoHtml = '';
+  if (p.memo && p.memo.trim()) {
+    memoHtml = '<div class="popup-memo"><strong>📝 感想・メモ:</strong><br>' + escapeHtml(p.memo) + '</div>';
+  }
+  let photoHtml = '';
+  if (p.photos && p.photos.length) {
+    photoHtml = '<div class="popup-photos">' + p.photos.map((src, phIdx) =>
+      '<img src="' + src + '" class="popup-photo-thumb" onclick="openLightbox(' + i + ',' + phIdx + ')">'
+    ).join('') + '</div>';
+  }
+  return '<div class="popup-box">' +
+    '<div class="popup-title">' + escapeHtml(p.name) + '</div>' +
+    '<div class="popup-time">🕒 ' + escapeHtml(p.time || '') + '</div>' +
+    (p.desc ? '<div class="popup-desc">' + escapeHtml(p.desc) + '</div>' : '') +
+    memoHtml + photoHtml +
+    '<button class="popup-edit-btn" onclick="editFinalPoint(' + i + ')">✏️ 地図で編集する</button></div>';
+}
+function refreshFinalListBtn(i) {
+  const b = finalListBtns[i];
+  if (!b) return;
+  const p = points[i];
+  b.innerHTML = '<strong>' + escapeHtml(p.time || '') + '</strong> ' + escapeHtml(p.name) + (p.memo ? ' <span style="color:#0b7a8b; font-size:0.85rem;">(感想あり)</span>' : '');
+}
+window.editFinalPoint = function(i) {
+  const p = points[i];
+  const m = finalMarkers[i];
+  if (!p || !m) return;
+  const html = '<div class="popup-box">' +
+    '<div class="popup-title">✏️ 地点を編集</div>' +
+    '<label class="popup-label">地点名</label>' +
+    '<input id="finEditName" class="popup-input" type="text" value="' + escapeHtml(p.name || '') + '">' +
+    '<label class="popup-label">時刻</label>' +
+    '<input id="finEditTime" class="popup-input" type="text" value="' + escapeHtml(p.time || '') + '">' +
+    '<label class="popup-label">説明</label>' +
+    '<input id="finEditDesc" class="popup-input" type="text" value="' + escapeHtml(p.desc || '') + '">' +
+    '<label class="popup-label">感想・メモ</label>' +
+    '<textarea id="finEditMemo" class="popup-input" rows="3">' + escapeHtml(p.memo || '') + '</textarea>' +
+    '<div style="display:flex; gap:6px; margin-top:8px;">' +
+    '<button class="popup-save-btn" onclick="saveFinalPoint(' + i + ')">💾 保存</button>' +
+    '<button class="popup-cancel-btn" onclick="cancelFinalEdit(' + i + ')">キャンセル</button></div>' +
+    '<div style="font-size:0.72rem; color:#666; margin-top:6px;">編集はこの端末のブラウザに保存されます</div></div>';
+  m.setPopupContent(html);
+  m.openPopup();
+};
+window.cancelFinalEdit = function(i) {
+  const m = finalMarkers[i];
+  if (!m) return;
+  m.setPopupContent(buildFinalPopup(i));
+  m.openPopup();
+};
+window.saveFinalPoint = function(i) {
+  const p = points[i];
+  if (!p) return;
+  p.name = document.getElementById('finEditName').value.trim() || '名称未設定';
+  p.time = document.getElementById('finEditTime').value.trim();
+  p.desc = document.getElementById('finEditDesc').value.trim();
+  p.memo = document.getElementById('finEditMemo').value.trim();
+  const ok = persistFinalEdit(i);
+  const m = finalMarkers[i];
+  if (m) {
+    m.setPopupContent(buildFinalPopup(i));
+    m.openPopup();
+    if (m.getTooltip()) m.setTooltipContent(p.name);
+  }
+  refreshFinalListBtn(i);
+  selectPoint(i);
+  alert(ok ? '保存しました（この端末に保存されます）' : '画面には反映しましたが、この端末へ保存できませんでした');
+};
+
+let map = null;
+let current = -1;
+let currentLightPt = 0;
+let currentLightPh = 0;
+
+function startMap() {
+  if (!window.L) {
+    document.getElementById('mapStatus').textContent = '地図ライブラリを読み込めません。ネット接続を確認してください。';
+    return;
+  }
+  map = L.map('map', { preferCanvas: true }).setView([points[0].lat, points[0].lon], 10);
+  const gsi = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '地図：国土地理院' });
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+
+  let switched = false;
+  gsi.on('tileerror', () => {
+    if (!switched) {
+      switched = true;
+      map.removeLayer(gsi);
+      osm.addTo(map);
+      document.getElementById('mapStatus').textContent = '国土地理院地図を取得できなかったため、OpenStreetMapへ切り替えました。';
+    }
+  });
+  gsi.addTo(map);
+  document.getElementById('mapStatus').textContent = '地図を表示しています（地点マーカーをクリックすると感想・メモが表示されます）。';
+
+  const line = L.polyline(track, { color: '#0879b9', weight: 5, opacity: 0.88, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+
+  const markerListContainer = document.getElementById('markerlist');
+  const markers = [];
+
+  points.forEach((p, i) => {
+    const m = L.marker([p.lat, p.lon]).addTo(map);
+    m.bindTooltip(p.name, { direction: 'top' });
+    m.bindPopup(buildFinalPopup(i), { maxWidth: 300 });
+    m.on('click', () => selectPoint(i));
+    markers.push(m);
+    finalMarkers.push(m);
+
+    const b = document.createElement('button');
+    b.innerHTML = '<strong>' + escapeHtml(p.time || '') + '</strong> ' + escapeHtml(p.name) + (p.memo ? ' <span style="color:#0b7a8b; font-size:0.85rem;">(感想あり)</span>' : '');
+    b.onclick = () => {
+      map.setView([p.lat, p.lon], 14);
+      m.openPopup();
+      selectPoint(i);
+    };
+    markerListContainer.appendChild(b);
+    finalListBtns.push(b);
+  });
+
+  try { map.fitBounds(line.getBounds(), { padding: [25, 25] }); } catch(e) {}
+}
+
+const video = document.getElementById('clip');
+const videoStatus = document.getElementById('videoStatus');
+const playClipBtn = document.getElementById('playClip');
+
+function selectPoint(i) {
+  current = i;
+  const p = points[i];
+  const isVideo = p.videoClip || (p.videos && p.videos.length > 0);
+  playClipBtn.disabled = !isVideo;
+  if (isVideo) {
+    videoStatus.textContent = '動画対応地点です。再生ボタンを押すと動画を再生します。';
+  } else {
+    videoStatus.textContent = 'この地点に対応する動画はありません。';
+  }
+}
+
+playClipBtn.addEventListener('click', async () => {
+  try {
+    if (!video.currentSrc || video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+      video.src = './とりてつ_13-20秒.mp4';
+      video.load();
+    }
+    video.currentTime = 0;
+    await video.play();
+    videoStatus.textContent = '動画を再生中です。';
+  } catch (err) {
+    videoStatus.textContent = '再生できませんでした。HTMLと同じフォルダに動画を配置してください。';
+  }
+});
+
+function openLightbox(ptIdx, phIdx) {
+  currentLightPt = ptIdx;
+  currentLightPh = phIdx;
+  updateLightbox();
+  document.getElementById('lightboxModal').classList.add('active');
+}
+
+function updateLightbox() {
+  const p = points[currentLightPt];
+  if (!p || !p.photos || !p.photos[currentLightPh]) return;
+  document.getElementById('lightboxImg').src = p.photos[currentLightPh];
+  document.getElementById('lightboxCaption').textContent = p.name + ' (' + (currentLightPh + 1) + ' / ' + p.photos.length + ')';
+  document.getElementById('lightboxPrev').style.display = p.photos.length > 1 ? 'flex' : 'none';
+  document.getElementById('lightboxNext').style.display = p.photos.length > 1 ? 'flex' : 'none';
+}
+
+document.getElementById('lightboxClose').onclick = () => document.getElementById('lightboxModal').classList.remove('active');
+document.getElementById('lightboxPrev').onclick = () => {
+  const p = points[currentLightPt];
+  currentLightPh = (currentLightPh - 1 + p.photos.length) % p.photos.length;
+  updateLightbox();
+};
+document.getElementById('lightboxNext').onclick = () => {
+  const p = points[currentLightPt];
+  currentLightPh = (currentLightPh + 1) % p.photos.length;
+  updateLightbox();
+};
+window.addEventListener('keydown', (e) => {
+  const m = document.getElementById('lightboxModal');
+  if (m.classList.contains('active')) {
+    if (e.key === 'Escape') m.classList.remove('active');
+    if (e.key === 'ArrowLeft') document.getElementById('lightboxPrev').click();
+    if (e.key === 'ArrowRight') document.getElementById('lightboxNext').click();
+  }
+});
+document.getElementById('lightboxModal').onclick = (e) => {
+  if (e.target.id === 'lightboxModal' || e.target.classList.contains('lightbox-content')) {
+    document.getElementById('lightboxModal').classList.remove('active');
+  }
+};
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[tag] || tag));
+}
+
+let tries = 0;
+const timer = setInterval(() => {
+  tries++;
+  if (window.L) { clearInterval(timer); startMap(); }
+  else if (tries > 60) { clearInterval(timer); startMap(); }
+}, 100);
+${sTagClose}
+</body>
+</html>`;
+}
+
+// 距離・所要時間自動計算
+document.getElementById('btnAutoCalc').addEventListener('click', () => {
+  if (!appData.track || appData.track.length < 2) {
+    alert('計算対象のGPS軌跡がありません。');
+    return;
+  }
+  let totalMeters = 0;
+  for (let i = 0; i < appData.track.length - 1; i++) {
+    totalMeters += calcDistance(
+      appData.track[i][0], appData.track[i][1],
+      appData.track[i + 1][0], appData.track[i + 1][1]
+    );
+  }
+  const km = (totalMeters / 1000).toFixed(1);
+  appData.stats.distance = `約${km} km`;
+
+  refreshHeaderTimesFromPoints();
+
+  saveDataToStorage();
+  updateHeaderDisplay();
+  showToast(`走行距離を再計算しました (${appData.stats.distance})`);
+});
+
+function calcDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+document.getElementById('btnFitMap').addEventListener('click', () => {
+  if (map && trackLine) {
+    map.fitBounds(trackLine.getBounds(), { padding: [30, 30] });
+  }
+});
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[tag] || tag));
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    t.style.display = 'none';
+  }, 3200);
+}
+
+// 初期化
+window.addEventListener('DOMContentLoaded', () => {
+  loadSavedData();
+  sortPointsChronologically();
+  refreshHeaderTimesFromPoints();
+  updateHeaderDisplay();
+  renderPointList();
+  selectPoint(0, false);
+
+  let checkLeaflet = setInterval(() => {
+    if (window.L) {
+      clearInterval(checkLeaflet);
+      initMap();
+    }
+  }, 100);
+});
