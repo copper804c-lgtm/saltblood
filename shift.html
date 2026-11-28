@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>シフト＆タイムカード</title>
+<style>
+  :root {
+    --pri: #1b4f3a; --acc: #0b7a8b; --bg: #f2f5f3; --card: #fff;
+    --line: #cfd8d2; --mut: #5e6d66; --sat: #1a5fb4; --sun: #c03a3a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Yu Gothic UI", Meiryo, sans-serif; background: var(--bg); color: #1f282e; }
+  header { background: var(--pri); color: #fff; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  header h1 { font-size: 1.1rem; margin: 0; }
+  header .shop { font-size: 0.9rem; opacity: 0.9; }
+  .monthnav { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .monthnav button { background: #ffffff22; color: #fff; border: 1px solid #ffffff55; border-radius: 8px; padding: 6px 10px; font-size: 0.95rem; cursor: pointer; }
+  .monthnav .cur { font-size: 1.05rem; font-weight: 700; min-width: 7.5em; text-align: center; }
+  nav.tabs { display: flex; gap: 4px; padding: 8px 10px 0; flex-wrap: wrap; }
+  nav.tabs button { border: 1px solid var(--line); background: #e7ede9; border-bottom: none; border-radius: 10px 10px 0 0; padding: 8px 13px; font-size: 0.95rem; cursor: pointer; }
+  nav.tabs button.active { background: var(--card); font-weight: 700; color: var(--pri); }
+  main { background: var(--card); margin: 0 10px 14px; border: 1px solid var(--line); border-radius: 0 10px 10px 10px; padding: 12px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .btn { border: 1.5px solid var(--pri); background: var(--pri); color: #fff; border-radius: 8px; padding: 7px 13px; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
+  .btn.sub { background: #fff; color: var(--pri); }
+  .btn.acc { background: var(--acc); border-color: var(--acc); }
+  .btn.danger { background: #fff; color: #a83232; border-color: #a83232; }
+  .btn.sm { padding: 4px 9px; font-size: 0.82rem; }
+  .note { font-size: 0.82rem; color: var(--mut); }
+  .gridwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table.grid { border-collapse: collapse; font-size: 0.78rem; white-space: nowrap; }
+  table.grid th, table.grid td { border: 1px solid var(--line); padding: 3px 4px; text-align: center; min-width: 44px; }
+  table.grid th.name, table.grid td.name { position: sticky; left: 0; background: #eef3f0; text-align: left; font-weight: 700; min-width: 92px; z-index: 2; }
+  table.grid th.sat { color: var(--sat); } table.grid th.sun { color: var(--sun); }
+  table.grid td.cell { cursor: pointer; }
+  table.grid td.cell:hover { background: #e8f4f6; }
+  table.grid td.off { color: #999; background: #f4f4f4; }
+  table.grid td .brk { display: block; font-size: 0.66rem; color: var(--mut); }
+  table.grid tfoot td { background: #eef3f0; font-weight: 700; }
+  table.sum { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  table.sum th, table.sum td { border: 1px solid var(--line); padding: 6px 8px; text-align: right; }
+  table.sum th { background: #eef3f0; }
+  table.sum td:first-child, table.sum th:first-child { text-align: left; }
+  table.sum tfoot td { font-weight: 700; background: #eef3f0; }
+  .cards { display: grid; gap: 10px; }
+  .staffcard { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+  .staffcard .nm { font-weight: 700; font-size: 1rem; }
+  .staffcard .meta { font-size: 0.82rem; color: var(--mut); }
+  .staffcard .sp { margin-left: auto; display: flex; gap: 6px; }
+  form.edit { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 14px; background: #fbfcfb; }
+  form.edit h3 { margin: 0 0 8px; font-size: 0.98rem; }
+  .frow { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
+  .fld { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--mut); }
+  .fld input, .fld select { font-size: 0.95rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; color: #1f282e; }
+  .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+  .modal-ov.active { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 16px; width: min(94vw, 380px); }
+  .modal h3 { margin: 0 0 4px; font-size: 1rem; }
+  .modal .sub2 { font-size: 0.82rem; color: var(--mut); margin-bottom: 10px; }
+  .modal .fld { margin-bottom: 8px; }
+  .modal .fld select { width: 100%; }
+  .modal .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .modal .btns { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .modal .btns .btn { flex: 1; }
+  .seg { display: inline-flex; border: 1.5px solid var(--pri); border-radius: 8px; overflow: hidden; }
+  .seg button { border: none; background: #fff; color: var(--pri); padding: 6px 12px; font-size: 0.88rem; cursor: pointer; font-weight: 600; }
+  .seg button.active { background: var(--pri); color: #fff; }
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: #20302a; color: #fff; padding: 9px 16px; border-radius: 999px; font-size: 0.88rem; opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 99; }
+  .toast.show { opacity: 1; }
+  @media print {
+    header, nav.tabs, .toolbar, .noprint { display: none !important; }
+    main { border: none; margin: 0; padding: 0; }
+    .gridwrap { overflow: visible; }
+    @page { size: A4 landscape; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🗓️ シフト＆タイムカード</h1>
+  <span class="shop" id="shopNameLabel"></span>
+  <div class="monthnav">
+    <button id="btnPrevMonth">◀ 前月</button>
+    <span class="cur" id="curMonthLabel"></span>
+    <button id="btnNextMonth">次月 ▶</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="shift" class="active">📅 月間シフト</button>
+  <button data-tab="actual">⏱️ タイムカード（実績）</button>
+  <button data-tab="weekly">🔁 週間基本</button>
+  <button data-tab="summary">💰 集計</button>
+  <button data-tab="staff">👥 スタッフ</button>
+  <button data-tab="settings">⚙️ 設定・データ</button>
+</nav>
+
+<main>
+  <section id="panel-shift">
+    <div class="toolbar">
+      <button class="btn acc" id="btnApplyWeekly">🔁 週間基本をこの月に反映</button>
+      <button class="btn sub noprint" onclick="window.print()">🖨️ 印刷</button>
+      <span class="note">セルをタップすると、その日の出勤・外出・戻り・退勤を編集できます。位置の考え方は元のExcelと同じ4点方式です。</span>
+    </div>
+    <div class="gridwrap" id="shiftGrid"></div>
+  </section>
+
+  <section id="panel-actual" hidden>
+    <div class="toolbar">
+      <button class="btn acc" id="btnCopyShift">📋 シフトを実績にコピー</button>
+      <button class="btn sub noprint" onclick="window.print()">🖨️ 印刷</button>
+      <span class="note">実際の出退勤を記録するタイムカードです。シフトと違う時間になった日だけ直せばOKです。</span>
+    </div>
+    <div class="gridwrap" id="actualGrid"></div>
+  </section>
+
+  <section id="panel-weekly" hidden>
+    <div class="toolbar">
+      <span class="note">曜日ごとの基本パターンです。ここを作っておくと、月間シフトは「反映」ボタンひとつで下書きができます。</span>
+    </div>
+    <div class="gridwrap" id="weeklyGrid"></div>
+  </section>
+
+  <section id="panel-summary" hidden>
+    <div class="toolbar">
+      <span class="seg" id="sumSourceSeg">
+        <button data-src="actual" class="active">実績で集計</button>
+        <button data-src="shift">予定で集計</button>
+      </span>
+      <button class="btn sub noprint" onclick="window.print()">🖨️ 印刷</button>
+      <span class="note" id="sumNote"></span>
+    </div>
+    <div id="summaryTable"></div>
+  </section>
+
+  <section id="panel-staff" hidden>
+    <form class="edit" id="staffForm">
+      <h3 id="staffFormTitle">スタッフを追加</h3>
+      <div class="frow">
+        <label class="fld">名前<input id="stName" type="text" placeholder="例：山田花子" style="width:11em;"></label>
+        <label class="fld">区分
+          <select id="stKind">
+            <option>パート・アルバイト</option>
+            <option>社員</option>
+            <option>その他</option>
+          </select>
+        </label>
+        <label class="fld">時給（空欄＝基本時給）<input id="stWage" type="number" min="0" placeholder="例：1050" style="width:8em;"></label>
+        <label class="fld">交通費
+          <select id="stTransType">
+            <option value="none">なし</option>
+            <option value="day">日額</option>
+            <option value="month">月額</option>
+          </select>
+        </label>
+        <label class="fld">交通費の金額<input id="stTransAmount" type="number" min="0" value="0" style="width:8em;"></label>
+        <label class="fld">メモ<input id="stMemo" type="text" placeholder="任意" style="width:12em;"></label>
+      </div>
+      <div class="frow">
+        <button type="submit" class="btn" id="stSubmit">追加する</button>
+        <button type="button" class="btn sub" id="stCancel" hidden>編集をやめる</button>
+      </div>
+      <p class="note">元のExcelにあった住所・電話・生年月日などの個人情報は、このアプリでは扱いません（シフトと給与計算に必要な項目だけに絞りました）。</p>
+    </form>
+    <div class="cards" id="staffList"></div>
+  </section>
+
+  <section id="panel-settings" hidden>
+    <form class="edit" id="settingsForm">
+      <h3>基本設定</h3>
+      <div class="frow">
+        <label class="fld">店舗名<input id="setShop" type="text" placeholder="例：○○食堂" style="width:14em;"></label>
+        <label class="fld">基本時給（円）<input id="setWage" type="number" min="0" style="width:8em;"></label>
+        <label class="fld">深夜割増の開始
+          <select id="setNightStart"></select>
+        </label>
+        <label class="fld">深夜割増率（％）<input id="setNightRate" type="number" min="0" max="200" style="width:6em;"></label>
+      </div>
+      <div class="frow">
+        <button type="submit" class="btn">設定を保存</button>
+        <span class="note">深夜時間は「開始時刻〜翌5:00」を割増対象として計算します（元のExcelの22時境界と同じ考え方です）。</span>
+      </div>
+    </form>
+    <form class="edit">
+      <h3>データの引継ぎ・バックアップ</h3>
+      <div class="frow">
+        <button type="button" class="btn sub" id="btnExport">⬇️ データを書き出す（JSON）</button>
+        <label class="btn sub" style="cursor:pointer;">⬆️ データを読み込む<input id="fileImport" type="file" accept=".json,application/json" hidden></label>
+        <button type="button" class="btn sub" id="btnSample">サンプルデータを入れる</button>
+        <button type="button" class="btn danger" id="btnWipe">全データを消す</button>
+      </div>
+      <p class="note">データはこの端末のブラウザの中に保存されます。端末を変えるときは書き出し→読み込みで引っ越してください。</p>
+    </form>
+  </section>
+</main>
+
+<div class="modal-ov" id="cellModal">
+  <div class="modal">
+    <h3 id="cmTitle">セルの編集</h3>
+    <div class="sub2" id="cmSub"></div>
+    <div class="row2">
+      <label class="fld">出勤<select id="cmIn"></select></label>
+      <label class="fld">退勤<select id="cmOut"></select></label>
+      <label class="fld">外出（休憩の開始）<select id="cmBOut"></select></label>
+      <label class="fld">戻り（休憩の終了）<select id="cmBIn"></select></label>
+    </div>
+    <div class="btns">
+      <button class="btn" id="cmSave">💾 保存</button>
+      <button class="btn sub" id="cmOff">休みにする</button>
+      <button class="btn sub" id="cmClear">クリア</button>
+      <button class="btn sub" id="cmCancel">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+// ===== 状態 =====
+const LS_KEY = 'shift_timecard_app_v1';
+const WD = ['月', '火', '水', '木', '金', '土', '日']; // 月曜はじまり
+let state = loadState();
+let curMonth = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })();
+let curTab = 'shift';
+let sumSource = 'actual';
+let editingStaffId = null;
+let cmCtx = null; // {source:'shift'|'actual'|'weekly', staffId, key}
+
+function defaultState() {
+  return {
+    settings: { shopName: '', baseWage: 1000, nightStart: 22 * 60, nightRate: 25 },
+    staff: [],            // {id, name, kind, wage:'', transType:'none', transAmount:0, memo:''}
+    weekly: {},           // staffId -> [cell x7] (月..日)
+    shifts: {},           // 'YYYY-MM' -> staffId -> {day: cell}
+    actuals: {}           // 同上
+  };
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { const s = JSON.parse(raw); const d = defaultState(); return Object.assign(d, s, { settings: Object.assign(d.settings, s.settings || {}) }); }
+  } catch (e) { console.warn(e); }
+  return defaultState();
+}
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { console.warn(e); }
+}
+let idSeq = 0;
+function newId() { return 's' + Date.now().toString(36) + (idSeq++).toString(36); }
+function staffById(id) { return state.staff.find(s => s.id === id) || null; }
+function effWage(st) { const w = parseFloat(st.wage); return (st.wage !== '' && st.wage != null && !isNaN(w)) ? w : (parseFloat(state.settings.baseWage) || 0); }
+
+// === PURE LOGIC START ===
+// 時刻は「分」で保持する。24時を超える表記（25:00=翌1:00）もそのまま扱う。
+function fmtH(min) { // グリッド用の短い表記（元のExcelと同じ小数表記）: 9 / 9.5 / 22.25
+  if (min == null) return '';
+  const h = min / 60;
+  return (Math.round(h * 100) / 100).toString();
+}
+function fmtHM(min) {
+  if (min == null) return '';
+  const h = Math.floor(min / 60), m = min % 60;
+  return h + ':' + String(m).padStart(2, '0');
+}
+function fmtHours(min) { return (Math.round(min / 60 * 100) / 100).toString(); }
+function cellSegments(cell) { // 労働区間（休憩を除く）を返す
+  if (!cell || cell === 'off') return [];
+  const segs = [];
+  const end1 = (cell.bo != null) ? cell.bo : cell.o;
+  if (cell.i != null && end1 != null && end1 > cell.i) segs.push([cell.i, end1]);
+  if (cell.bo != null && cell.bi != null && cell.o != null && cell.o > cell.bi) segs.push([cell.bi, cell.o]);
+  return segs;
+}
+function workMinutes(cell) {
+  return cellSegments(cell).reduce((a, s) => a + (s[1] - s[0]), 0);
+}
+function nightMinutes(cell, nightStart) {
+  // 割増対象： [nightStart, 翌5:00) 。分表記では [nightStart, 29*60) と [0, 5*60) の合算で近似する。
+  const NIGHT_END = 5 * 60;
+  let total = 0;
+  for (const [a, b] of cellSegments(cell)) {
+    total += Math.max(0, Math.min(b, 30 * 60) - Math.max(a, nightStart));
+    total += Math.max(0, Math.min(b, NIGHT_END) - Math.max(a, 0));
+  }
+  return total;
+}
+function daysInMonthOf(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+function weekdayMonFirst(monthKey, day) { // 0=月 .. 6=日
+  const [y, m] = monthKey.split('-').map(Number);
+  return (new Date(y, m - 1, day).getDay() + 6) % 7;
+}
+function summarizeMonth(state, monthKey, source) {
+  const book = (source === 'actual' ? state.actuals : state.shifts)[monthKey] || {};
+  const rows = [];
+  let tot = { days: 0, work: 0, night: 0, pay: 0, trans: 0, total: 0 };
+  for (const st of state.staff) {
+    const days = book[st.id] || {};
+    let dCount = 0, work = 0, night = 0;
+    for (const d of Object.values(days)) {
+      const w = workMinutes(d);
+      if (d && d !== 'off' && w > 0) { dCount++; work += w; night += nightMinutes(d, state.settings.nightStart); }
+    }
+    const wage = effWage(st);
+    const normal = work - night;
+    const pay = Math.round(normal / 60 * wage + night / 60 * wage * (1 + (state.settings.nightRate || 0) / 100));
+    let trans = 0;
+    if (st.transType === 'day') trans = (st.transAmount || 0) * dCount;
+    else if (st.transType === 'month') trans = (st.transAmount || 0);
+    const row = { staffId: st.id, name: st.name, kind: st.kind, wage, days: dCount, work, night, pay, trans, total: pay + trans };
+    rows.push(row);
+    tot.days += dCount; tot.work += work; tot.night += night; tot.pay += pay; tot.trans += trans; tot.total += row.total;
+  }
+  return { rows, tot };
+}
+// === PURE LOGIC END ===
+
+// ===== 時刻セレクト =====
+function timeOptions(withBlank) {
+  let html = withBlank ? '<option value="">―</option>' : '';
+  for (let m = 4 * 60; m <= 28 * 60; m += 15) html += `<option value="${m}">${fmtHM(m)}</option>`;
+  return html;
+}
+function fillTimeSelect(sel, val) {
+  sel.innerHTML = timeOptions(true);
+  sel.value = (val == null ? '' : String(val));
+}
+function readTimeSelect(sel) { return sel.value === '' ? null : parseInt(sel.value, 10); }
+
+// ===== セルの読み書き =====
+function getCell(source, staffId, key) {
+  if (source === 'weekly') {
+    const wk = state.weekly[staffId] || [];
+    return wk[key] || null;
+  }
+  const book = (source === 'actual' ? state.actuals : state.shifts)[curMonth] || {};
+  return (book[staffId] || {})[key] || null;
+}
+function setCell(source, staffId, key, cell) {
+  if (source === 'weekly') {
+    if (!state.weekly[staffId]) state.weekly[staffId] = [null, null, null, null, null, null, null];
+    state.weekly[staffId][key] = cell;
+  } else {
+    const store = (source === 'actual' ? state.actuals : state.shifts);
+    if (!store[curMonth]) store[curMonth] = {};
+    if (!store[curMonth][staffId]) store[curMonth][staffId] = {};
+    if (cell === null) delete store[curMonth][staffId][key]; else store[curMonth][staffId][key] = cell;
+  }
+  saveState();
+}
+function cellText(cell) {
+  if (cell === 'off') return '休';
+  if (!cell) return '';
+  let t = fmtH(cell.i) + '-' + fmtH(cell.o);
+  if (cell.bo != null && cell.bi != null) t += `<span class="brk">休 ${fmtH(cell.bo)}-${fmtH(cell.bi)}</span>`;
+  return t;
+}
+
+// ===== グリッド描画 =====
+function renderMonthGrid(containerId, source) {
+  const el = document.getElementById(containerId);
+  const n = daysInMonthOf(curMonth);
+  if (state.staff.length === 0) {
+    el.innerHTML = '<p class="note" style="padding:10px;">まず「👥 スタッフ」タブでスタッフを登録してください。「⚙️ 設定・データ」にサンプルデータもあります。</p>';
+    return;
+  }
+  let html = '<table class="grid"><thead><tr><th class="name">スタッフ</th>';
+  for (let d = 1; d <= n; d++) {
+    const wd = weekdayMonFirst(curMonth, d);
+    const cls = wd === 5 ? 'sat' : (wd === 6 ? 'sun' : '');
+    html += `<th class="${cls}">${d}<br>${WD[wd]}</th>`;
+  }
+  html += '</tr></thead><tbody>';
+  const dayWork = new Array(n + 1).fill(0), dayHeads = new Array(n + 1).fill(0);
+  for (const st of state.staff) {
+    html += `<tr><td class="name">${escapeHtml(st.name)}</td>`;
+    for (let d = 1; d <= n; d++) {
+      const cell = getCell(source, st.id, d);
+      const w = workMinutes(cell);
+      if (w > 0) { dayWork[d] += w; dayHeads[d]++; }
+      html += `<td class="cell${cell === 'off' ? ' off' : ''}" data-src="${source}" data-staff="${st.id}" data-key="${d}">${cellText(cell)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody><tfoot><tr><td class="name">合計時間（人数）</td>';
+  for (let d = 1; d <= n; d++) html += `<td>${dayWork[d] ? fmtHours(dayWork[d]) + 'h<br>(' + dayHeads[d] + '人)' : ''}</td>`;
+  html += '</tr></tfoot></table>';
+  el.innerHTML = html;
+}
+function renderWeeklyGrid() {
+  const el = document.getElementById('weeklyGrid');
+  if (state.staff.length === 0) {
+    el.innerHTML = '<p class="note" style="padding:10px;">まず「👥 スタッフ」タブでスタッフを登録してください。</p>';
+    return;
+  }
+  let html = '<table class="grid"><thead><tr><th class="name">スタッフ</th>';
+  WD.forEach((w, i) => { html += `<th class="${i === 5 ? 'sat' : (i === 6 ? 'sun' : '')}">${w}</th>`; });
+  html += '</tr></thead><tbody>';
+  for (const st of state.staff) {
+    html += `<tr><td class="name">${escapeHtml(st.name)}</td>`;
+    for (let wd = 0; wd < 7; wd++) {
+      const cell = getCell('weekly', st.id, wd);
+      html += `<td class="cell${cell === 'off' ? ' off' : ''}" data-src="weekly" data-staff="${st.id}" data-key="${wd}">${cellText(cell)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+}
+
+// ===== 集計 =====
+function renderSummary() {
+  const { rows, tot } = summarizeMonth(state, curMonth, sumSource);
+  const book = (sumSource === 'actual' ? state.actuals : state.shifts)[curMonth] || {};
+  document.getElementById('sumNote').textContent = Object.keys(book).length === 0
+    ? 'この月の' + (sumSource === 'actual' ? '実績' : '予定') + 'データはまだありません。' : '';
+  let html = '<table class="sum"><thead><tr><th>スタッフ</th><th>区分</th><th>時給</th><th>出勤日数</th><th>労働時間</th><th>うち深夜</th><th>給与</th><th>交通費</th><th>合計</th></tr></thead><tbody>';
+  for (const r of rows) {
+    html += `<tr><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.kind)}</td><td>¥${r.wage.toLocaleString()}</td><td>${r.days}日</td><td>${fmtHours(r.work)}h</td><td>${fmtHours(r.night)}h</td><td>¥${r.pay.toLocaleString()}</td><td>¥${r.trans.toLocaleString()}</td><td>¥${r.total.toLocaleString()}</td></tr>`;
+  }
+  html += `</tbody><tfoot><tr><td>合計</td><td></td><td></td><td>${tot.days}日</td><td>${fmtHours(tot.work)}h</td><td>${fmtHours(tot.night)}h</td><td>¥${tot.pay.toLocaleString()}</td><td>¥${tot.trans.toLocaleString()}</td><td>¥${tot.total.toLocaleString()}</td></tr></tfoot></table>`;
+  html += '<p class="note">給与＝（労働時間−深夜時間）×時給 ＋ 深夜時間×時給×（1＋割増率）。深夜の境界は設定の「深夜割増の開始」です。</p>';
+  document.getElementById('summaryTable').innerHTML = html;
+}
+
+// ===== スタッフ =====
+function renderStaff() {
+  const el = document.getElementById('staffList');
+  if (state.staff.length === 0) { el.innerHTML = '<p class="note">まだスタッフがいません。上のフォームから追加してください。</p>'; return; }
+  el.innerHTML = state.staff.map(st => {
+    const trans = st.transType === 'day' ? `交通費 ¥${(st.transAmount || 0).toLocaleString()}/日` : (st.transType === 'month' ? `交通費 ¥${(st.transAmount || 0).toLocaleString()}/月` : '交通費なし');
+    return `<div class="staffcard"><span class="nm">${escapeHtml(st.name)}</span>
+      <span class="meta">${escapeHtml(st.kind)} ／ 時給 ${st.wage === '' || st.wage == null ? '基本 ¥' + (state.settings.baseWage || 0).toLocaleString() : '¥' + Number(st.wage).toLocaleString()} ／ ${trans}${st.memo ? ' ／ ' + escapeHtml(st.memo) : ''}</span>
+      <span class="sp"><button class="btn sub sm" data-edit="${st.id}">編集</button><button class="btn danger sm" data-del="${st.id}">削除</button></span></div>`;
+  }).join('');
+  el.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => startEditStaff(b.dataset.edit)));
+  el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+    const st = staffById(b.dataset.del);
+    if (!st) return;
+    if (!confirm(`「${st.name}」を削除しますか？（この人のシフト・実績も表示されなくなります）`)) return;
+    state.staff = state.staff.filter(s => s.id !== st.id);
+    saveState(); renderAll();
+    showToast('削除しました');
+  }));
+}
+function startEditStaff(id) {
+  const st = staffById(id); if (!st) return;
+  editingStaffId = id;
+  document.getElementById('staffFormTitle').textContent = 'スタッフを編集：' + st.name;
+  document.getElementById('stName').value = st.name;
+  document.getElementById('stKind').value = st.kind;
+  document.getElementById('stWage').value = st.wage == null ? '' : st.wage;
+  document.getElementById('stTransType').value = st.transType || 'none';
+  document.getElementById('stTransAmount').value = st.transAmount || 0;
+  document.getElementById('stMemo').value = st.memo || '';
+  document.getElementById('stSubmit').textContent = '更新する';
+  document.getElementById('stCancel').hidden = false;
+  document.getElementById('stName').focus();
+}
+function resetStaffForm() {
+  editingStaffId = null;
+  document.getElementById('staffForm').reset();
+  document.getElementById('staffFormTitle').textContent = 'スタッフを追加';
+  document.getElementById('stSubmit').textContent = '追加する';
+  document.getElementById('stCancel').hidden = true;
+}
+
+// ===== セル編集モーダル =====
+function openCellModal(source, staffId, key) {
+  const st = staffById(staffId); if (!st) return;
+  cmCtx = { source, staffId, key };
+  const cell = getCell(source, staffId, key) || {};
+  const when = source === 'weekly' ? WD[key] + '曜日' : curMonth.replace('-', '年') + '月' + key + '日（' + WD[weekdayMonFirst(curMonth, key)] + '）';
+  document.getElementById('cmTitle').textContent = st.name + ' ／ ' + when;
+  document.getElementById('cmSub').textContent = source === 'weekly' ? '週間基本パターン' : (source === 'actual' ? 'タイムカード（実績）' : '月間シフト（予定）');
+  fillTimeSelect(document.getElementById('cmIn'), cell.i);
+  fillTimeSelect(document.getElementById('cmOut'), cell.o);
+  fillTimeSelect(document.getElementById('cmBOut'), cell.bo);
+  fillTimeSelect(document.getElementById('cmBIn'), cell.bi);
+  document.getElementById('cellModal').classList.add('active');
+}
+function closeCellModal() { document.getElementById('cellModal').classList.remove('active'); cmCtx = null; }
+function saveCellFromModal(kind) {
+  if (!cmCtx) return;
+  const { source, staffId, key } = cmCtx;
+  if (kind === 'off') setCell(source, staffId, key, 'off');
+  else if (kind === 'clear') setCell(source, staffId, key, null);
+  else {
+    const i = readTimeSelect(document.getElementById('cmIn'));
+    const o = readTimeSelect(document.getElementById('cmOut'));
+    const bo = readTimeSelect(document.getElementById('cmBOut'));
+    const bi = readTimeSelect(document.getElementById('cmBIn'));
+    if (i == null || o == null) { alert('出勤と退勤を入れてください（休みの場合は「休みにする」を押してください）。'); return; }
+    if (o <= i) { alert('退勤は出勤より後の時刻にしてください。'); return; }
+    if ((bo == null) !== (bi == null)) { alert('外出と戻りは両方入れてください。'); return; }
+    if (bo != null && !(i <= bo && bo < bi && bi <= o)) { alert('休憩（外出〜戻り）は勤務時間の中に入れてください。'); return; }
+    setCell(source, staffId, key, { i, o, bo, bi });
+  }
+  closeCellModal();
+  renderAll();
+  showToast('保存しました');
+}
+
+// ===== 全体描画 =====
+function renderHeader() {
+  document.getElementById('shopNameLabel').textContent = state.settings.shopName || '';
+  const [y, m] = curMonth.split('-').map(Number);
+  document.getElementById('curMonthLabel').textContent = y + '年' + m + '月';
+}
+function renderAll() {
+  renderHeader();
+  renderMonthGrid('shiftGrid', 'shift');
+  renderMonthGrid('actualGrid', 'actual');
+  renderWeeklyGrid();
+  renderSummary();
+  renderStaff();
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ===== イベント =====
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]'); if (!b) return;
+  curTab = b.dataset.tab;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('active', x === b));
+  ['shift', 'actual', 'weekly', 'summary', 'staff', 'settings'].forEach(t => {
+    document.getElementById('panel-' + t).hidden = (t !== curTab);
+  });
+});
+function moveMonth(delta) {
+  const [y, m] = curMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  curMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  renderAll();
+}
+document.getElementById('btnPrevMonth').addEventListener('click', () => moveMonth(-1));
+document.getElementById('btnNextMonth').addEventListener('click', () => moveMonth(1));
+document.querySelector('main').addEventListener('click', e => {
+  const td = e.target.closest('td.cell');
+  if (td) openCellModal(td.dataset.src, td.dataset.staff, td.dataset.src === 'weekly' || td.dataset.src === 'shift' || td.dataset.src === 'actual' ? (td.dataset.src === 'weekly' ? Number(td.dataset.key) : Number(td.dataset.key)) : td.dataset.key);
+});
+document.getElementById('cmSave').addEventListener('click', () => saveCellFromModal('save'));
+document.getElementById('cmOff').addEventListener('click', () => saveCellFromModal('off'));
+document.getElementById('cmClear').addEventListener('click', () => saveCellFromModal('clear'));
+document.getElementById('cmCancel').addEventListener('click', closeCellModal);
+document.getElementById('cellModal').addEventListener('click', e => { if (e.target.id === 'cellModal') closeCellModal(); });
+
+document.getElementById('btnApplyWeekly').addEventListener('click', () => {
+  if (state.staff.length === 0) { alert('まずスタッフを登録してください。'); return; }
+  if (!confirm(curMonth + ' の月間シフトを、週間基本パターンで作り直しますか？（今の月間シフトは上書きされます）')) return;
+  const n = daysInMonthOf(curMonth);
+  const book = {};
+  for (const st of state.staff) {
+    const wk = state.weekly[st.id] || [];
+    const days = {};
+    for (let d = 1; d <= n; d++) {
+      const c = wk[weekdayMonFirst(curMonth, d)];
+      if (c) days[d] = (c === 'off') ? 'off' : { i: c.i, o: c.o, bo: c.bo, bi: c.bi };
+    }
+    book[st.id] = days;
+  }
+  state.shifts[curMonth] = book;
+  saveState(); renderAll();
+  showToast('週間基本を反映しました');
+});
+document.getElementById('btnCopyShift').addEventListener('click', () => {
+  if (!confirm(curMonth + ' のシフト（予定）を実績にコピーしますか？（今の実績は上書きされます）')) return;
+  state.actuals[curMonth] = JSON.parse(JSON.stringify(state.shifts[curMonth] || {}));
+  saveState(); renderAll();
+  showToast('シフトを実績にコピーしました');
+});
+document.getElementById('sumSourceSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-src]'); if (!b) return;
+  sumSource = b.dataset.src;
+  document.querySelectorAll('#sumSourceSeg button').forEach(x => x.classList.toggle('active', x === b));
+  renderSummary();
+});
+document.getElementById('staffForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('stName').value.trim();
+  if (!name) { alert('名前を入れてください。'); return; }
+  const data = {
+    name,
+    kind: document.getElementById('stKind').value,
+    wage: document.getElementById('stWage').value === '' ? '' : Number(document.getElementById('stWage').value),
+    transType: document.getElementById('stTransType').value,
+    transAmount: Number(document.getElementById('stTransAmount').value) || 0,
+    memo: document.getElementById('stMemo').value.trim()
+  };
+  if (editingStaffId) Object.assign(staffById(editingStaffId), data);
+  else state.staff.push(Object.assign({ id: newId() }, data));
+  saveState(); resetStaffForm(); renderAll();
+  showToast('スタッフを保存しました');
+});
+document.getElementById('stCancel').addEventListener('click', resetStaffForm);
+document.getElementById('settingsForm').addEventListener('submit', e => {
+  e.preventDefault();
+  state.settings.shopName = document.getElementById('setShop').value.trim();
+  state.settings.baseWage = Number(document.getElementById('setWage').value) || 0;
+  state.settings.nightStart = Number(document.getElementById('setNightStart').value);
+  state.settings.nightRate = Number(document.getElementById('setNightRate').value) || 0;
+  saveState(); renderAll();
+  showToast('設定を保存しました');
+});
+document.getElementById('btnExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'シフト・タイムカード_データ.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  showToast('書き出しました');
+});
+document.getElementById('fileImport').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const s = JSON.parse(r.result);
+      if (!s || !Array.isArray(s.staff)) throw new Error('形式が違います');
+      if (!confirm('読み込むと、今のデータは上書きされます。よろしいですか？')) return;
+      state = Object.assign(defaultState(), s);
+      saveState(); renderAll();
+      showToast('読み込みました');
+    } catch (err) { alert('読み込みに失敗しました：' + err.message); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+document.getElementById('btnSample').addEventListener('click', () => {
+  if (state.staff.length && !confirm('サンプルデータを追加しますか？（今のスタッフに加えて5名追加されます）')) return;
+  const samples = [
+    { name: 'サンプル店長', kind: '社員', wage: '', transType: 'month', transAmount: 10000 },
+    { name: 'サンプル花子', kind: 'パート・アルバイト', wage: 1050, transType: 'day', transAmount: 400 },
+    { name: 'サンプル太郎', kind: 'パート・アルバイト', wage: 1050, transType: 'day', transAmount: 400 },
+    { name: 'サンプル次郎', kind: 'パート・アルバイト', wage: 1100, transType: 'none', transAmount: 0 },
+    { name: 'サンプル梅子', kind: 'パート・アルバイト', wage: 1050, transType: 'day', transAmount: 300 }
+  ];
+  const W = (i, o, bo, bi) => ({ i: i * 60, o: o * 60, bo: bo == null ? null : bo * 60, bi: bi == null ? null : bi * 60 });
+  const pats = [
+    [W(9, 17, 12, 13), W(9, 17, 12, 13), W(9, 17, 12, 13), W(9, 17, 12, 13), W(9, 17, 12, 13), 'off', 'off'],
+    [W(9, 14), null, W(9, 14), null, W(10, 15), W(10, 15), null],
+    [null, W(17, 22.25), null, W(17, 22.25), null, W(16, 22.25), W(16, 22.25)],
+    [W(11, 19, 15, 16), W(11, 19, 15, 16), null, W(11, 19, 15, 16), W(11, 19, 15, 16), null, W(11, 19, 15, 16)],
+    [W(8, 13), W(8, 13), null, W(8, 13), null, W(8, 13), null]
+  ];
+  samples.forEach((s, idx) => {
+    const st = Object.assign({ id: newId(), memo: '' }, s);
+    state.staff.push(st);
+    state.weekly[st.id] = pats[idx];
+  });
+  saveState(); renderAll();
+  showToast('サンプルを入れました。「週間基本をこの月に反映」も試せます');
+});
+document.getElementById('btnWipe').addEventListener('click', () => {
+  if (!confirm('全データを消しますか？（スタッフ・シフト・実績・設定がすべて消えます）')) return;
+  if (!confirm('本当に消しますか？この操作は元に戻せません。')) return;
+  state = defaultState();
+  saveState(); resetStaffForm(); renderAll();
+  showToast('全データを消しました');
+});
+
+// ===== 初期化 =====
+(function init() {
+  const ns = document.getElementById('setNightStart');
+  ns.innerHTML = timeOptions(false);
+  document.getElementById('setShop').value = state.settings.shopName || '';
+  document.getElementById('setWage').value = state.settings.baseWage;
+  ns.value = String(state.settings.nightStart);
+  document.getElementById('setNightRate').value = state.settings.nightRate;
+  renderAll();
+})();
+</script>
+</body>
+</html>
