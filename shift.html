@@ -84,12 +84,14 @@
     <button id="btnPrevMonth">◀ 前月</button>
     <span class="cur" id="curMonthLabel"></span>
     <button id="btnNextMonth">次月 ▶</button>
+    <button id="btnRole">🔓 ロックなし</button>
   </div>
 </header>
 
 <nav class="tabs" id="tabs">
   <button data-tab="shift" class="active">📅 月間シフト</button>
   <button data-tab="actual">⏱️ タイムカード（実績）</button>
+  <button data-tab="request">📝 希望シフト</button>
   <button data-tab="weekly">🔁 週間基本</button>
   <button data-tab="summary">💰 集計</button>
   <button data-tab="staff">👥 スタッフ</button>
@@ -113,6 +115,17 @@
       <span class="note">実際の出退勤を記録するタイムカードです。シフトと違う時間になった日だけ直せばOKです。</span>
     </div>
     <div class="gridwrap" id="actualGrid"></div>
+  </section>
+
+  <section id="panel-request" hidden>
+    <div class="toolbar">
+      <label class="fld">名前
+        <select id="reqStaffSel"></select>
+      </label>
+      <button class="btn acc" id="btnReflectReq">📥 希望をシフトに反映（管理者）</button>
+      <span class="note">希望を出すための画面です。セルをタップして、希望の出勤・退勤（休みたい日は「休み」）を入れてください。管理者は全員分が見られます。</span>
+    </div>
+    <div class="gridwrap" id="requestGrid"></div>
   </section>
 
   <section id="panel-weekly" hidden>
@@ -176,7 +189,9 @@
           <select id="setNightStart"></select>
         </label>
         <label class="fld">深夜割増率（％）<input id="setNightRate" type="number" min="0" max="200" style="width:6em;"></label>
+        <label class="fld">管理者PIN（空欄＝ロックなし）<input id="setPin" type="password" inputmode="numeric" maxlength="8" placeholder="例：1234" style="width:9em;"></label>
       </div>
+      <p class="note">管理者PINを設定すると、集計（お金）・スタッフ・週間基本・設定のタブと、シフト/実績の編集は管理者だけになります。スタッフは「希望シフト」の提出と閲覧だけができるようになります。PINは「うっかり触らない」ための仕切りで、本格的な本人認証ではありません（厳密な権限管理は、データをサーバーで共有する段階で実装します）。</p>
       <div class="frow">
         <button type="submit" class="btn">設定を保存</button>
         <span class="note">深夜時間は「開始時刻〜翌5:00」を割増対象として計算します（元のExcelの22時境界と同じ考え方です）。</span>
@@ -230,11 +245,12 @@ let cmCtx = null; // {source:'shift'|'actual'|'weekly', staffId, key}
 
 function defaultState() {
   return {
-    settings: { shopName: '', baseWage: 1000, nightStart: 22 * 60, nightRate: 25 },
+    settings: { shopName: '', baseWage: 1000, nightStart: 22 * 60, nightRate: 25, adminPin: '' },
     staff: [],            // {id, name, kind, wage:'', transType:'none', transAmount:0, memo:''}
     weekly: {},           // staffId -> [cell x7] (月..日)
     shifts: {},           // 'YYYY-MM' -> staffId -> {day: cell}
-    actuals: {}           // 同上
+    actuals: {},          // 同上
+    requests: {}          // 同上（希望シフト）
   };
 }
 function loadState() {
@@ -317,6 +333,19 @@ function summarizeMonth(state, monthKey, source) {
   }
   return { rows, tot };
 }
+function reflectRequests(state, monthKey) { // 希望シフトを月間シフトへ反映（希望がある日だけ上書き）。反映した件数を返す。
+  const req = state.requests[monthKey] || {};
+  if (!state.shifts[monthKey]) state.shifts[monthKey] = {};
+  let count = 0;
+  for (const [sid, days] of Object.entries(req)) {
+    if (!state.shifts[monthKey][sid]) state.shifts[monthKey][sid] = {};
+    for (const [d, cell] of Object.entries(days)) {
+      state.shifts[monthKey][sid][d] = (cell === 'off') ? 'off' : { i: cell.i, o: cell.o, bo: cell.bo, bi: cell.bi };
+      count++;
+    }
+  }
+  return count;
+}
 // === PURE LOGIC END ===
 
 // ===== 時刻セレクト =====
@@ -332,12 +361,15 @@ function fillTimeSelect(sel, val) {
 function readTimeSelect(sel) { return sel.value === '' ? null : parseInt(sel.value, 10); }
 
 // ===== セルの読み書き =====
+function storeOf(source) {
+  return source === 'actual' ? state.actuals : (source === 'request' ? state.requests : state.shifts);
+}
 function getCell(source, staffId, key) {
   if (source === 'weekly') {
     const wk = state.weekly[staffId] || [];
     return wk[key] || null;
   }
-  const book = (source === 'actual' ? state.actuals : state.shifts)[curMonth] || {};
+  const book = storeOf(source)[curMonth] || {};
   return (book[staffId] || {})[key] || null;
 }
 function setCell(source, staffId, key, cell) {
@@ -345,7 +377,7 @@ function setCell(source, staffId, key, cell) {
     if (!state.weekly[staffId]) state.weekly[staffId] = [null, null, null, null, null, null, null];
     state.weekly[staffId][key] = cell;
   } else {
-    const store = (source === 'actual' ? state.actuals : state.shifts);
+    const store = storeOf(source);
     if (!store[curMonth]) store[curMonth] = {};
     if (!store[curMonth][staffId]) store[curMonth][staffId] = {};
     if (cell === null) delete store[curMonth][staffId][key]; else store[curMonth][staffId][key] = cell;
@@ -361,10 +393,11 @@ function cellText(cell) {
 }
 
 // ===== グリッド描画 =====
-function renderMonthGrid(containerId, source) {
+function renderMonthGrid(containerId, source, staffFilter) {
   const el = document.getElementById(containerId);
   const n = daysInMonthOf(curMonth);
-  if (state.staff.length === 0) {
+  const staffList = staffFilter ? state.staff.filter(s => s.id === staffFilter) : state.staff;
+  if (staffList.length === 0) {
     el.innerHTML = '<p class="note" style="padding:10px;">まず「👥 スタッフ」タブでスタッフを登録してください。「⚙️ 設定・データ」にサンプルデータもあります。</p>';
     return;
   }
@@ -376,7 +409,7 @@ function renderMonthGrid(containerId, source) {
   }
   html += '</tr></thead><tbody>';
   const dayWork = new Array(n + 1).fill(0), dayHeads = new Array(n + 1).fill(0);
-  for (const st of state.staff) {
+  for (const st of staffList) {
     html += `<tr><td class="name">${escapeHtml(st.name)}</td>`;
     for (let d = 1; d <= n; d++) {
       const cell = getCell(source, st.id, d);
@@ -391,6 +424,39 @@ function renderMonthGrid(containerId, source) {
   html += '</tr></tfoot></table>';
   el.innerHTML = html;
 }
+function renderRequestGrid() {
+  const sel = document.getElementById('reqStaffSel');
+  const prev = sel.value;
+  sel.innerHTML = state.staff.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+  if (prev && state.staff.some(s => s.id === prev)) sel.value = prev;
+  // スタッフモードでは自分の行だけ、管理者は全員分
+  renderMonthGrid('requestGrid', 'request', isAdmin() ? null : (sel.value || null));
+}
+
+// ===== 役割（管理者PIN） =====
+let adminUnlocked = false;
+try { adminUnlocked = sessionStorage.getItem('shift_admin_unlocked') === '1'; } catch (e) {}
+function isAdmin() { return !state.settings.adminPin || adminUnlocked; }
+function setUnlocked(v) {
+  adminUnlocked = v;
+  try { v ? sessionStorage.setItem('shift_admin_unlocked', '1') : sessionStorage.removeItem('shift_admin_unlocked'); } catch (e) {}
+}
+function promptUnlock() {
+  if (isAdmin()) return true;
+  const pin = prompt('管理者PINを入力してください');
+  if (pin != null && pin === String(state.settings.adminPin)) { setUnlocked(true); renderAll(); return true; }
+  if (pin != null) alert('PINが違います');
+  return false;
+}
+function renderRole() {
+  const b = document.getElementById('btnRole');
+  if (!state.settings.adminPin) b.textContent = '🔓 ロックなし';
+  else if (adminUnlocked) b.textContent = '🔓 管理者モード';
+  else b.textContent = '🔒 スタッフモード';
+  const adminOnly = ['btnApplyWeekly', 'btnCopyShift', 'btnReflectReq'];
+  adminOnly.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = isAdmin() ? '' : 'none'; });
+}
+
 function renderWeeklyGrid() {
   const el = document.getElementById('weeklyGrid');
   if (state.staff.length === 0) {
@@ -479,7 +545,7 @@ function openCellModal(source, staffId, key) {
   const cell = getCell(source, staffId, key) || {};
   const when = source === 'weekly' ? WD[key] + '曜日' : curMonth.replace('-', '年') + '月' + key + '日（' + WD[weekdayMonFirst(curMonth, key)] + '）';
   document.getElementById('cmTitle').textContent = st.name + ' ／ ' + when;
-  document.getElementById('cmSub').textContent = source === 'weekly' ? '週間基本パターン' : (source === 'actual' ? 'タイムカード（実績）' : '月間シフト（予定）');
+  document.getElementById('cmSub').textContent = source === 'weekly' ? '週間基本パターン' : (source === 'actual' ? 'タイムカード（実績）' : (source === 'request' ? '希望シフト' : '月間シフト（予定）'));
   fillTimeSelect(document.getElementById('cmIn'), cell.i);
   fillTimeSelect(document.getElementById('cmOut'), cell.o);
   fillTimeSelect(document.getElementById('cmBOut'), cell.bo);
@@ -516,8 +582,10 @@ function renderHeader() {
 }
 function renderAll() {
   renderHeader();
+  renderRole();
   renderMonthGrid('shiftGrid', 'shift');
   renderMonthGrid('actualGrid', 'actual');
+  renderRequestGrid();
   renderWeeklyGrid();
   renderSummary();
   renderStaff();
@@ -529,13 +597,30 @@ function showToast(msg) {
 }
 
 // ===== イベント =====
+const ADMIN_TABS = ['weekly', 'summary', 'staff', 'settings'];
 document.getElementById('tabs').addEventListener('click', e => {
   const b = e.target.closest('button[data-tab]'); if (!b) return;
+  if (ADMIN_TABS.includes(b.dataset.tab) && !promptUnlock()) return;
   curTab = b.dataset.tab;
   document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('active', x === b));
-  ['shift', 'actual', 'weekly', 'summary', 'staff', 'settings'].forEach(t => {
+  ['shift', 'actual', 'request', 'weekly', 'summary', 'staff', 'settings'].forEach(t => {
     document.getElementById('panel-' + t).hidden = (t !== curTab);
   });
+});
+document.getElementById('btnRole').addEventListener('click', () => {
+  if (!state.settings.adminPin) { showToast('管理者PINが未設定です（設定タブで設定できます）'); return; }
+  if (adminUnlocked) {
+    setUnlocked(false);
+    if (ADMIN_TABS.includes(curTab)) {
+      curTab = 'shift';
+      document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('active', x.dataset.tab === 'shift'));
+      ['shift', 'actual', 'request', 'weekly', 'summary', 'staff', 'settings'].forEach(t => {
+        document.getElementById('panel-' + t).hidden = (t !== 'shift');
+      });
+    }
+    renderAll(); showToast('ロックしました（スタッフモード）');
+  }
+  else if (promptUnlock()) showToast('管理者モードになりました');
 });
 function moveMonth(delta) {
   const [y, m] = curMonth.split('-').map(Number);
@@ -547,7 +632,22 @@ document.getElementById('btnPrevMonth').addEventListener('click', () => moveMont
 document.getElementById('btnNextMonth').addEventListener('click', () => moveMonth(1));
 document.querySelector('main').addEventListener('click', e => {
   const td = e.target.closest('td.cell');
-  if (td) openCellModal(td.dataset.src, td.dataset.staff, td.dataset.src === 'weekly' || td.dataset.src === 'shift' || td.dataset.src === 'actual' ? (td.dataset.src === 'weekly' ? Number(td.dataset.key) : Number(td.dataset.key)) : td.dataset.key);
+  if (!td) return;
+  if ((td.dataset.src === 'shift' || td.dataset.src === 'actual' || td.dataset.src === 'weekly') && !isAdmin()) {
+    showToast('スタッフモードでは閲覧のみです（編集は管理者モードで）');
+    return;
+  }
+  openCellModal(td.dataset.src, td.dataset.staff, Number(td.dataset.key));
+});
+document.getElementById('reqStaffSel').addEventListener('change', renderRequestGrid);
+document.getElementById('btnReflectReq').addEventListener('click', () => {
+  if (!isAdmin()) return;
+  const req = state.requests[curMonth] || {};
+  if (Object.keys(req).length === 0) { alert('この月の希望シフトはまだ出ていません。'); return; }
+  if (!confirm(curMonth + ' の希望シフトを、月間シフトに反映しますか？（希望が出ている日だけ上書きされます）')) return;
+  const n = reflectRequests(state, curMonth);
+  saveState(); renderAll();
+  showToast('希望を ' + n + ' 件、シフトに反映しました');
 });
 document.getElementById('cmSave').addEventListener('click', () => saveCellFromModal('save'));
 document.getElementById('cmOff').addEventListener('click', () => saveCellFromModal('off'));
@@ -556,6 +656,7 @@ document.getElementById('cmCancel').addEventListener('click', closeCellModal);
 document.getElementById('cellModal').addEventListener('click', e => { if (e.target.id === 'cellModal') closeCellModal(); });
 
 document.getElementById('btnApplyWeekly').addEventListener('click', () => {
+  if (!isAdmin()) return;
   if (state.staff.length === 0) { alert('まずスタッフを登録してください。'); return; }
   if (!confirm(curMonth + ' の月間シフトを、週間基本パターンで作り直しますか？（今の月間シフトは上書きされます）')) return;
   const n = daysInMonthOf(curMonth);
@@ -574,6 +675,7 @@ document.getElementById('btnApplyWeekly').addEventListener('click', () => {
   showToast('週間基本を反映しました');
 });
 document.getElementById('btnCopyShift').addEventListener('click', () => {
+  if (!isAdmin()) return;
   if (!confirm(curMonth + ' のシフト（予定）を実績にコピーしますか？（今の実績は上書きされます）')) return;
   state.actuals[curMonth] = JSON.parse(JSON.stringify(state.shifts[curMonth] || {}));
   saveState(); renderAll();
@@ -609,6 +711,7 @@ document.getElementById('settingsForm').addEventListener('submit', e => {
   state.settings.baseWage = Number(document.getElementById('setWage').value) || 0;
   state.settings.nightStart = Number(document.getElementById('setNightStart').value);
   state.settings.nightRate = Number(document.getElementById('setNightRate').value) || 0;
+  state.settings.adminPin = document.getElementById('setPin').value.trim();
   saveState(); renderAll();
   showToast('設定を保存しました');
 });
@@ -678,6 +781,7 @@ document.getElementById('btnWipe').addEventListener('click', () => {
   document.getElementById('setWage').value = state.settings.baseWage;
   ns.value = String(state.settings.nightStart);
   document.getElementById('setNightRate').value = state.settings.nightRate;
+  document.getElementById('setPin').value = state.settings.adminPin || '';
   renderAll();
 })();
 </script>
